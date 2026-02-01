@@ -14,15 +14,11 @@ export default defineAppConfig({
     list: [
       {
         pagePath: 'pages/index/index',
-        text: '首页',
-        iconPath: 'assets/tabs/home.png',
-        selectedIconPath: 'assets/tabs/home-active.png'
+        text: '首页'
       },
       {
         pagePath: 'pages/user/index',
-        text: '我的',
-        iconPath: 'assets/tabs/user.png',
-        selectedIconPath: 'assets/tabs/user-active.png'
+        text: '我的'
       }
     ]
   },
