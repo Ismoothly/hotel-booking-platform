@@ -1,0 +1,32 @@
+{
+  "name": "hotel-booking-platform",
+  "version": "1.0.0",
+  "description": "易宿酒店预订平台 - 第五期前端训练营大作业",
+  "private": true,
+  "workspaces": [
+    "client",
+    "admin",
+    "server"
+  ],
+  "scripts": {
+    "install-all": "npm install && cd client && npm install && cd ../admin && npm install && cd ../server && npm install",
+    "dev": "concurrently \"npm run dev:server\" \"npm run dev:client\" \"npm run dev:admin\"",
+    "dev:client": "cd client && npm start",
+    "dev:admin": "cd admin && npm start",
+    "dev:server": "cd server && npm run dev",
+    "build": "npm run build:client && npm run build:admin",
+    "build:client": "cd client && npm run build",
+    "build:admin": "cd admin && npm run build"
+  },
+  "keywords": [
+    "hotel",
+    "booking",
+    "react",
+    "nodejs"
+  ],
+  "author": "Training Camp Team",
+  "license": "MIT",
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

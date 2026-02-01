@@ -1,0 +1,190 @@
+.hotel-detail-page {
+  min-height: 100vh;
+  background-color: #f5f5f5;
+  padding-bottom: 20px;
+}
+
+.detail-banner {
+  width: 100%;
+  height: 250px;
+  background-color: #000;
+}
+
+.detail-banner img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.custom-indicator {
+  position: absolute;
+  bottom: 12px;
+  right: 12px;
+  padding: 4px 12px;
+  background-color: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  border-radius: 12px;
+  font-size: 12px;
+}
+
+.hotel-info-card {
+  margin: 12px;
+  padding: 16px;
+}
+
+.hotel-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 4px;
+}
+
+.hotel-name-en {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+.hotel-rating {
+  color: #ffa940;
+  font-size: 16px;
+  margin-bottom: 12px;
+}
+
+.hotel-address {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.address-icon {
+  font-size: 14px;
+}
+
+.hotel-opening {
+  font-size: 13px;
+  color: #999;
+}
+
+.facilities-card,
+.nearby-card,
+.date-card {
+  margin: 0 12px 12px;
+  padding: 16px;
+}
+
+.card-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.facility-tag-large {
+  width: 100%;
+  text-align: center;
+  padding: 8px 0;
+}
+
+.nearby-section {
+  margin-bottom: 12px;
+}
+
+.nearby-section:last-child {
+  margin-bottom: 0;
+}
+
+.section-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.section-content {
+  font-size: 14px;
+  color: #333;
+  line-height: 1.6;
+}
+
+.date-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+}
+
+.date-item {
+  text-align: center;
+}
+
+.date-label {
+  font-size: 14px;
+  color: #999;
+  margin-bottom: 4px;
+}
+
+.date-value {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+}
+
+.date-divider {
+  font-size: 14px;
+  color: #666;
+}
+
+.rooms-section {
+  margin: 0 12px;
+}
+
+.section-title {
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 12px;
+}
+
+.room-card {
+  margin-bottom: 12px;
+  padding: 16px;
+}
+
+.room-type {
+  font-size: 16px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.room-description {
+  font-size: 13px;
+  color: #999;
+  margin-bottom: 12px;
+}
+
+.room-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.room-price {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.price-value {
+  font-size: 24px;
+  font-weight: bold;
+  color: #ff6b6b;
+}
+
+.price-unit {
+  font-size: 14px;
+  color: #999;
+}
