@@ -10,9 +10,10 @@
 
 ```
 hotel-booking-platform/
-├── client/          # 用户端（移动端）
-├── admin/           # 管理端（PC端）
-├── server/          # 后端服务
+├── client/                 # 用户端（React H5 移动端）
+├── admin/                  # 管理端（React PC端）
+├── hotel-booking-taro/     # 小程序端（Taro 跨端框架）
+├── server/                 # 后端服务
 └── README.md
 ```
 
@@ -80,10 +81,32 @@ npm run install-all
 npm run dev
 
 # 或分别启动
-npm run dev:client   # 启动用户端（端口3000）
-npm run dev:admin    # 启动管理端（端口3001）
-npm run dev:server   # 启动后端服务（端口5000）
+npm run dev:client      # 启动用户端（端口3000）
+npm run dev:admin       # 启动管理端（端口3001）
+npm run dev:server      # 启动后端服务（端口5000）
+npm run dev:taro        # 启动小程序开发服务
 ```
+
+### Taro 小程序编译
+
+```bash
+cd hotel-booking-taro
+
+# 开发调试
+npm run dev:weapp       # 编译微信小程序（开发模式）
+npm run dev:alipay      # 编译支付宝小程序（开发模式）
+npm run dev:h5          # 编译 H5（开发模式）
+
+# 生产构建
+npm run build:weapp     # 编译微信小程序（生产模式）
+npm run build:alipay    # 编译支付宝小程序（生产模式）
+npm run build:h5        # 编译 H5（生产模式）
+```
+
+编译完成后：
+- **微信小程序**：用微信开发者工具打开 `hotel-booking-taro/dist/weapp`
+- **支付宝小程序**：用支付宝开发者工具打开 `hotel-booking-taro/dist/alipay`
+- **H5**：访问本地服务 `http://localhost:10086`
 
 ### 构建生产版本
 
@@ -133,6 +156,7 @@ npm run build
 - 酒店地址
 - 酒店星级
 - 酒店房型
+[{"type":"标准间","price":300,"description":"25平米"}]
 - 酒店价格
 - 开业时间
 
@@ -160,5 +184,5 @@ npm run build
 ## 开发团队
 
 
-
+Remove-Item -Path "F:\hotel-booking-platform\hotel-booking-taro" -Recurse -Force
 
