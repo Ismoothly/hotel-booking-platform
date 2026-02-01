@@ -1,0 +1,35 @@
+.hotel-form-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.hotel-form-container .ant-form {
+  background: #fafafa;
+  padding: 24px;
+  border-radius: 8px;
+}
+
+.hotel-form-container .ant-form-item-label > label {
+  font-weight: 500;
+  color: #1890ff;
+}
+
+.hotel-form-container textarea {
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.hotel-form-container .ant-divider {
+  margin: 24px 0 16px;
+}
+
+@media (max-width: 600px) {
+  .hotel-form-container {
+    padding: 12px;
+  }
+
+  .hotel-form-container .ant-form {
+    padding: 16px;
+  }
+}

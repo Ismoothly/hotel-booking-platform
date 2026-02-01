@@ -1,0 +1,9 @@
+.booking-detail-container {
+  max-width: 800px;
+  margin: 20px auto;
+  padding: 0 20px;
+
+  .booking-card {
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+}
