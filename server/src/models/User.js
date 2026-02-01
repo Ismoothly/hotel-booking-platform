@@ -6,7 +6,7 @@ let users = [
   {
     id: '1',
     username: 'admin',
-    password: '$2a$10$8YZ0QvZ9KX.FZJ9fVq3FTOqKYNRj4xZJ0VQpz4F8XZJ9fVq3FTOqK', // admin123
+    password: '$2a$10$d1JT0jrS/v6lVkvP.5jqC.aqyudfVHyQn0qqWinKwWZPGYUqYrqWC', // admin123
     role: 'admin',
     email: 'admin@hotel.com',
     createdAt: new Date().toISOString()
@@ -14,7 +14,7 @@ let users = [
   {
     id: '2',
     username: 'merchant',
-    password: '$2a$10$8YZ0QvZ9KX.FZJ9fVq3FTOqKYNRj4xZJ0VQpz4F8XZJ9fVq3FTOqK', // merchant123
+    password: '$2a$10$.NllSLftsddUT8eg9OIGYuFiZbdAgCtlHrMTHagKSGN.yzyBHgvnq', // merchant123
     role: 'merchant',
     email: 'merchant@hotel.com',
     createdAt: new Date().toISOString()

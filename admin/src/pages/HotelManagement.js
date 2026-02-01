@@ -47,7 +47,15 @@ const HotelManagement = () => {
 
   const handleEdit = (hotel) => {
     setEditingHotel(hotel);
-    form.setFieldsValue(hotel);
+    // 将数组字段序列化为 JSON 字符串便于编辑
+    form.setFieldsValue({
+      ...hotel,
+      rooms: JSON.stringify(hotel.rooms || [], null, 2),
+      images: JSON.stringify(hotel.images || [], null, 2),
+      facilities: JSON.stringify(hotel.facilities || [], null, 2),
+      nearbyAttractions: JSON.stringify(hotel.nearbyAttractions || [], null, 2),
+      nearbyShopping: JSON.stringify(hotel.nearbyShopping || [], null, 2)
+    });
     setModalVisible(true);
   };
 
@@ -63,11 +71,44 @@ const HotelManagement = () => {
 
   const handleSubmit = async (values) => {
     try {
+      // 解析 JSON 字段
+      const payload = { ...values };
+      
+      // 解析房型
+      if (typeof payload.rooms === 'string') {
+        payload.rooms = JSON.parse(payload.rooms);
+      }
+      
+      // 解析可选的 JSON 字段
+      if (payload.images && typeof payload.images === 'string') {
+        payload.images = JSON.parse(payload.images);
+      } else {
+        payload.images = payload.images || [];
+      }
+      
+      if (payload.facilities && typeof payload.facilities === 'string') {
+        payload.facilities = JSON.parse(payload.facilities);
+      } else {
+        payload.facilities = payload.facilities || [];
+      }
+      
+      if (payload.nearbyAttractions && typeof payload.nearbyAttractions === 'string') {
+        payload.nearbyAttractions = JSON.parse(payload.nearbyAttractions);
+      } else {
+        payload.nearbyAttractions = payload.nearbyAttractions || [];
+      }
+      
+      if (payload.nearbyShopping && typeof payload.nearbyShopping === 'string') {
+        payload.nearbyShopping = JSON.parse(payload.nearbyShopping);
+      } else {
+        payload.nearbyShopping = payload.nearbyShopping || [];
+      }
+
       if (editingHotel) {
-        await hotelAPI.updateHotel(editingHotel.id, values);
+        await hotelAPI.updateHotel(editingHotel.id, payload);
         message.success('更新成功');
       } else {
-        await hotelAPI.createHotel(values);
+        await hotelAPI.createHotel(payload);
         message.success('创建成功');
       }
       setModalVisible(false);
@@ -209,8 +250,42 @@ const HotelManagement = () => {
           <Form.Item name="openingDate" label="开业时间" rules={[{ required: true }]}>
             <Input type="date" />
           </Form.Item>
-          <Form.Item name="rooms" label="房型（JSON格式）" rules={[{ required: true }]}>
+          <Form.Item
+            name="rooms"
+            label="房型（JSON格式）"
+            rules={[
+              { required: true, message: '请填写房型（JSON 数组）' },
+              {
+                validator: (_, value) => {
+                  try {
+                    const parsed = typeof value === 'string' ? JSON.parse(value) : value;
+                    if (!Array.isArray(parsed) || parsed.length === 0) {
+                      return Promise.reject(new Error('至少需要一个房型'));
+                    }
+                    return Promise.resolve();
+                  } catch (e) {
+                    return Promise.reject(new Error('房型必须是有效的 JSON 数组'));
+                  }
+                }
+              }
+            ]}
+          >
             <TextArea rows={4} placeholder='[{"type":"标准间","price":300,"description":"25平米"}]' />
+          </Form.Item>
+          <Form.Item name="images" label="图片URL（JSON数组，可选）">
+            <TextArea rows={3} placeholder='["https://example.com/image1.jpg","https://example.com/image2.jpg"]' />
+          </Form.Item>
+          <Form.Item name="facilities" label="设施（JSON数组，可选）">
+            <TextArea rows={3} placeholder='["免费WiFi","健身房","游泳池","餐厅"]' />
+          </Form.Item>
+          <Form.Item name="nearbyAttractions" label="景点（JSON数组，可选）">
+            <TextArea rows={2} placeholder='["景点1","景点2","景点3"]' />
+          </Form.Item>
+          <Form.Item name="transportation" label="交通（可选）">
+            <Input placeholder="地铁/公交等交通信息" />
+          </Form.Item>
+          <Form.Item name="nearbyShopping" label="购物（JSON数组，可选）">
+            <TextArea rows={2} placeholder='["商场1","商场2"]' />
           </Form.Item>
         </Form>
       </Modal>
