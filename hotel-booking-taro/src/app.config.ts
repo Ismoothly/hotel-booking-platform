@@ -4,10 +4,6 @@ export default defineAppConfig({
     'pages/login/index',
     'pages/register/index',
     'pages/hotel-detail/index',
-    'pages/booking/index',
-    'pages/my-bookings/index',
-    'pages/my-hotels/index',
-    'pages/help/index',
     'pages/user/index'
   ],
   tabBar: {
