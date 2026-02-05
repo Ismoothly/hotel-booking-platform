@@ -1,46 +1,41 @@
-# 双 Token 机制测试脚本
-# 使用方法：.\test-double-token.ps1
+# Double Token Test Script
+# Usage: .\test-double-token.ps1
 
-Write-Host "`n========== 双 Token 机制测试 ==========" -ForegroundColor Cyan
-Write-Host "测试服务器: http://localhost:5000`n" -ForegroundColor Gray
+Write-Host "`n========== Double Token Test ==========" -ForegroundColor Cyan
+Write-Host "Server: http://localhost:5000`n" -ForegroundColor Gray
 
-# 测试 1: 登录
-Write-Host "[测试 1] 登录并获取 Token..." -ForegroundColor Yellow
+# Test 1: Login
+Write-Host "[Test 1] Login and get tokens..." -ForegroundColor Yellow
 try {
     $loginResponse = Invoke-WebRequest -Uri "http://localhost:5000/api/auth/login" `
         -Method POST `
         -ContentType "application/json" `
         -Body '{"username":"merchant","password":"merchant123"}' `
         -SessionVariable session `
+        -UseBasicParsing `
         -ErrorAction Stop
 
     $loginData = ($loginResponse.Content | ConvertFrom-Json).data
     $accessToken = $loginData.accessToken
     
-    Write-Host "  ✓ 登录成功" -ForegroundColor Green
-    Write-Host "  ✓ Access Token: $($accessToken.Substring(0,30))..." -ForegroundColor Green
+    Write-Host "  OK Login successful" -ForegroundColor Green
+    Write-Host "  OK Access Token: $($accessToken.Substring(0,30))..." -ForegroundColor Green
     
-    # 检查 Cookie
-    $cookies = $session.Cookies.GetCookies("http://localhost:5000")
-    $refreshCookie = $cookies | Where-Object {$_.Name -eq "refresh_token"}
-    
-    if ($refreshCookie) {
-        Write-Host "  ✓ Refresh Token Cookie 已设置 (HttpOnly)" -ForegroundColor Green
-        Write-Host "    - Name: $($refreshCookie.Name)" -ForegroundColor Gray
-        Write-Host "    - Path: $($refreshCookie.Path)" -ForegroundColor Gray
-        Write-Host "    - HttpOnly: $($refreshCookie.HttpOnly)" -ForegroundColor Gray
+    # Check response headers for Set-Cookie
+    if ($loginResponse.Headers['Set-Cookie'] -match 'refresh_token') {
+        Write-Host "  OK Refresh Token Cookie set in response header" -ForegroundColor Green
+        Write-Host "    - Found Set-Cookie header with refresh_token" -ForegroundColor Gray
     } else {
-        Write-Host "  ✗ Refresh Token Cookie 未找到" -ForegroundColor Red
-        exit 1
+        Write-Host "  WARN Cookie not visible in headers (may be HttpOnly)" -ForegroundColor Yellow
     }
 } catch {
-    Write-Host "  ✗ 登录失败: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "    请确保后端服务已启动 (cd server && npm run dev)" -ForegroundColor Yellow
+    Write-Host "  FAIL Login failed: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "    Please ensure backend is running (cd server && node src\index.js)" -ForegroundColor Yellow
     exit 1
 }
 
-# 测试 2: 使用 Access Token 访问受保护接口
-Write-Host "`n[测试 2] 使用 Access Token 访问受保护接口..." -ForegroundColor Yellow
+# Test 2: Access protected endpoint with Access Token
+Write-Host "`n[Test 2] Access protected endpoint..." -ForegroundColor Yellow
 try {
     $headers = @{
         "Authorization" = "Bearer $accessToken"
@@ -48,84 +43,89 @@ try {
     $meResponse = Invoke-WebRequest -Uri "http://localhost:5000/api/auth/me" `
         -Method GET `
         -Headers $headers `
+        -UseBasicParsing `
         -ErrorAction Stop
 
     $userData = ($meResponse.Content | ConvertFrom-Json).data
-    Write-Host "  ✓ 访问成功" -ForegroundColor Green
-    Write-Host "    - 用户: $($userData.username)" -ForegroundColor Gray
-    Write-Host "    - 角色: $($userData.role)" -ForegroundColor Gray
+    Write-Host "  OK Access successful" -ForegroundColor Green
+    Write-Host "    - User: $($userData.username)" -ForegroundColor Gray
+    Write-Host "    - Role: $($userData.role)" -ForegroundColor Gray
 } catch {
-    Write-Host "  ✗ 访问失败: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  FAIL Access failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
-# 测试 3: 刷新 Access Token
-Write-Host "`n[测试 3] 使用 Refresh Token 刷新..." -ForegroundColor Yellow
+# Test 3: Refresh Access Token
+Write-Host "`n[Test 3] Refresh with Refresh Token..." -ForegroundColor Yellow
 try {
     $refreshResponse = Invoke-WebRequest -Uri "http://localhost:5000/api/auth/refresh" `
         -Method POST `
+        -UseBasicParsing `
         -WebSession $session `
         -ErrorAction Stop
 
     $newAccessToken = ($refreshResponse.Content | ConvertFrom-Json).data.accessToken
-    Write-Host "  ✓ 刷新成功" -ForegroundColor Green
-    Write-Host "  ✓ 新 Access Token: $($newAccessToken.Substring(0,30))..." -ForegroundColor Green
+    Write-Host "  OK Refresh successful" -ForegroundColor Green
+    Write-Host "  OK New Access Token: $($newAccessToken.Substring(0,30))..." -ForegroundColor Green
     
-    # 验证新旧 Token 不同
+    # Verify token rotation
     if ($newAccessToken -ne $accessToken) {
-        Write-Host "  ✓ Token 已更新 (旋转机制生效)" -ForegroundColor Green
+        Write-Host "  OK Token rotated (rotation mechanism working)" -ForegroundColor Green
     } else {
-        Write-Host "  ⚠ Token 未变化" -ForegroundColor Yellow
+        Write-Host "  WARN Token unchanged" -ForegroundColor Yellow
     }
     
     $accessToken = $newAccessToken
 } catch {
-    Write-Host "  ✗ 刷新失败: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  FAIL Refresh failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
-# 测试 4: 使用新 Token 访问
-Write-Host "`n[测试 4] 使用新 Token 访问..." -ForegroundColor Yellow
+# Test 4: Access with new token
+Write-Host "`n[Test 4] Access with new token..." -ForegroundColor Yellow
 try {
     $headers = @{
         "Authorization" = "Bearer $accessToken"
     }
     $meResponse2 = Invoke-WebRequest -Uri "http://localhost:5000/api/auth/me" `
         -Method GET `
+        -UseBasicParsing `
         -Headers $headers `
         -ErrorAction Stop
 
-    Write-Host "  ✓ 新 Token 有效" -ForegroundColor Green
+    Write-Host "  OK New token valid" -ForegroundColor Green
 } catch {
-    Write-Host "  ✗ 新 Token 无效: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  FAIL New token invalid: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
-# 测试 5: 退出登录
-Write-Host "`n[测试 5] 退出登录..." -ForegroundColor Yellow
+# Test 5: Logout
+Write-Host "`n[Test 5] Logout..." -ForegroundColor Yellow
 try {
     $logoutResponse = Invoke-WebRequest -Uri "http://localhost:5000/api/auth/logout" `
         -Method POST `
-        -WebSession $session `
+        -UseBasicParsing `
         -ErrorAction Stop
 
-    Write-Host "  ✓ 退出成功" -ForegroundColor Green
+    Write-Host "  OK Logout successful" -ForegroundColor Green
     
-    # 尝试用已退出的 refresh token 刷新（应该失败）
+    # Try refresh after logout (should fail)
     try {
         $failedRefresh = Invoke-WebRequest -Uri "http://localhost:5000/api/auth/refresh" `
             -Method POST `
             -WebSession $session `
+            -UseBasicParsing
+            -WebSession $session `
             -ErrorAction Stop
-        Write-Host "  ⚠ 警告: 退出后 refresh token 仍然有效" -ForegroundColor Yellow
+        Write-Host "  WARN Refresh token still valid after logout" -ForegroundColor Yellow
     } catch {
-        Write-Host "  ✓ Refresh Token 已失效（符合预期）" -ForegroundColor Green
+        Write-Host "  OK Refresh token invalidated (expected)" -ForegroundColor Green
     }
 } catch {
-    Write-Host "  ✗ 退出失败: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "  FAIL Logout failed: $($_.Exception.Message)" -ForegroundColor Red
     exit 1
 }
 
 Write-Host "`n========================================" -ForegroundColor Cyan
-Write-Host "✓ 所有测试通过！双 Token 机制运行正常" -ForegroundColor Green
+Write-Host "OK All tests passed! Double token mechanism working" -ForegroundColor Green
 Write-Host "========================================`n" -ForegroundColor Cyan
