@@ -215,19 +215,7 @@ exports.refresh = async (req, res) => {
       data: {
         accessToken: newAccessToken
       }
-  } catch (error) {
-    // 清理数据库中的刷新令牌，避免留下孤立令牌
-    const refreshToken = req.cookies?.refresh_token;
-    if (refreshToken) {
-      try {
-        const tokenOwner = await UserModel.findByRefreshToken(refreshToken);
-        if (tokenOwner) {
-          await UserModel.removeRefreshToken(tokenOwner.id, refreshToken);
-        }
-      } catch (cleanupError) {
-        // 忽略清理错误，继续返回原始刷新错误
-      }
-    }
+    });
   } catch (error) {
     clearRefreshTokenCookie(res);
     return res.status(401).json({
