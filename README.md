@@ -211,7 +211,24 @@ Invoke-RestMethod http://127.0.0.1:5000/api/hotels |
 - Refresh Token：长期有效（默认 7 天），写入 httpOnly Cookie，仅用于刷新 Access Token。
 
 前端已内置 401 自动刷新逻辑：当 Access Token 过期会调用刷新接口，拿到新 Access Token 后重试原请求。
+PS F:\hotel-booking-platform> .\test-double-token.ps1
+                                                                                ========== Double Token Test ==========                                         Server: http://localhost:5000                                                                                                                                   
+[Test 1] Login and get tokens...
+  OK Login successful                                                             OK Access Token: eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...                              OK Refresh Token Cookie set in response header                                    - Found Set-Cookie header with refresh_token                                
 
+[Test 2] Access protected endpoint...                                             OK Access successful                                                              - User: merchant                                                                - Role: merchant                                                                                                                                            [Test 3] Refresh with Refresh Token...                                            OK Refresh successful                                                           OK New Access Token: eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...                        
+  WARN Token unchanged
+
+[Test 4] Access with new token...
+  OK New token valid
+
+[Test 5] Logout...
+  OK Logout successful
+  OK Refresh token invalidated (expected)
+
+========================================
+OK All tests passed! Double token mechanism working
+========================================
 ## 示例请求流程
 
 ### 1) 注册
