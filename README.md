@@ -152,6 +152,27 @@ npm run build
 
 ## 数据字段说明
 
+### 酒店状态字段
+- **status**: 发布状态
+  - `draft`: 草稿（商户创建后的初始状态）
+  - `published`: 已发布（客户端可见）
+  - `unpublished`: 已下线
+  
+- **reviewStatus**: 审核状态
+  - `pending`: 待审核（商户创建后的初始状态）
+  - `approved`: 审核通过（可以发布）
+  - `rejected`: 审核拒绝
+
+### 酒店审核发布流程
+1. **商户创建酒店** → status: `draft`, reviewStatus: `pending`
+2. **管理员审核通过** → reviewStatus: `approved`（或 `rejected`）
+3. **管理员发布酒店** → status: `published`
+4. **客户端可见** → 只显示 status 为 `published` 的酒店
+# 查询客户端酒店（只显示published状态）
+Invoke-RestMethod http://127.0.0.1:5000/api/hotels | 
+  Select-Object -ExpandProperty data | 
+  Select-Object nameCn, status, reviewStatus | 
+  Format-Table
 ### 酒店信息必填字段
 - 酒店名称（中英文）
 - 酒店地址

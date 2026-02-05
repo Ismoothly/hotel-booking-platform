@@ -7,7 +7,7 @@ const setRefreshTokenCookie = (res, token) => {
     httpOnly: true,
     sameSite: 'lax',
     secure: config.env === 'production',
-    maxAge: config.jwtRefreshExpire,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7天（毫秒）
     path: '/api/auth'
   });
 };
