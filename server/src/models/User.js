@@ -9,6 +9,7 @@ let users = [
     password: '$2a$10$d1JT0jrS/v6lVkvP.5jqC.aqyudfVHyQn0qqWinKwWZPGYUqYrqWC', // admin123
     role: 'admin',
     email: 'admin@hotel.com',
+    refreshTokens: [],
     createdAt: new Date().toISOString()
   },
   {
@@ -17,6 +18,7 @@ let users = [
     password: '$2a$10$.NllSLftsddUT8eg9OIGYuFiZbdAgCtlHrMTHagKSGN.yzyBHgvnq', // merchant123
     role: 'merchant',
     email: 'merchant@hotel.com',
+    refreshTokens: [],
     createdAt: new Date().toISOString()
   }
 ];
@@ -52,6 +54,7 @@ class UserModel {
       password: hashedPassword,
       role: role || 'merchant',
       email,
+      refreshTokens: [],
       createdAt: new Date().toISOString()
     };
 
@@ -90,6 +93,42 @@ class UserModel {
 
   static async comparePassword(plainPassword, hashedPassword) {
     return await bcrypt.compare(plainPassword, hashedPassword);
+  }
+
+  static async addRefreshToken(id, token) {
+    const user = await this.findById(id);
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+
+    user.refreshTokens = user.refreshTokens || [];
+    user.refreshTokens.push(token);
+    return user;
+  }
+
+  static async replaceRefreshToken(id, oldToken, newToken) {
+    const user = await this.findById(id);
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+
+    user.refreshTokens = (user.refreshTokens || []).filter(t => t !== oldToken);
+    user.refreshTokens.push(newToken);
+    return user;
+  }
+
+  static async removeRefreshToken(id, token) {
+    const user = await this.findById(id);
+    if (!user) {
+      throw new Error('用户不存在');
+    }
+
+    user.refreshTokens = (user.refreshTokens || []).filter(t => t !== token);
+    return user;
+  }
+
+  static async findByRefreshToken(token) {
+    return users.find(user => (user.refreshTokens || []).includes(token));
   }
 }
 

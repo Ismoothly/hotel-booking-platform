@@ -1,4 +1,4 @@
-const { verifyToken } = require('../utils/jwt');
+const { verifyAccessToken } = require('../utils/jwt');
 const UserModel = require('../models/User');
 
 /**
@@ -19,7 +19,7 @@ exports.auth = async (req, res, next) => {
     const token = authHeader.substring(7); // 移除 "Bearer " 前缀
 
     // 验证token
-    const decoded = verifyToken(token);
+    const decoded = verifyAccessToken(token);
 
     // 获取用户信息
     const user = await UserModel.findById(decoded.userId);
