@@ -86,7 +86,7 @@ exports.createHotel = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: '酒店创建成功',
+      message: '酒店创建成功，等待管理员审核',
       data: hotel
     });
   } catch (error) {

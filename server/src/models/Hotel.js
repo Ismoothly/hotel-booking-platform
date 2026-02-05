@@ -139,8 +139,8 @@ class HotelModel {
       id: uuidv4(),
       ...hotelData,
       merchantId,
-      status: 'published', // 新建酒店直接发布，简化流程
-      reviewStatus: 'approved', // 直接标记为已审核
+      status: 'draft', // 新建酒店为草稿状态
+      reviewStatus: 'pending', // 待管理员审核
       reviewMessage: '',
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
