@@ -1,5 +1,25 @@
 const UserModel = require('../models/User');
-const { generateToken } = require('../utils/jwt');
+const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
+const config = require('../config');
+
+const setRefreshTokenCookie = (res, token) => {
+  res.cookie('refresh_token', token, {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: config.env === 'production',
+    maxAge: config.jwtRefreshExpire,
+    path: '/api/auth'
+  });
+};
+
+const clearRefreshTokenCookie = (res) => {
+  res.clearCookie('refresh_token', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: config.env === 'production',
+    path: '/api/auth'
+  });
+};
 
 /**
  * 用户注册
@@ -32,8 +52,11 @@ exports.register = async (req, res) => {
       role: role || 'merchant'
     });
 
-    // 生成token
-    const token = generateToken({ userId: user.id });
+    // 生成 access/refresh token
+    const accessToken = generateAccessToken({ userId: user.id });
+    const refreshToken = generateRefreshToken({ userId: user.id });
+    await UserModel.addRefreshToken(user.id, refreshToken);
+    setRefreshTokenCookie(res, refreshToken);
 
     res.status(201).json({
       success: true,
@@ -45,7 +68,7 @@ exports.register = async (req, res) => {
           role: user.role,
           email: user.email
         },
-        token
+        accessToken
       }
     });
   } catch (error) {
@@ -91,8 +114,11 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 生成token
-    const token = generateToken({ userId: user.id });
+    // 生成 access/refresh token
+    const accessToken = generateAccessToken({ userId: user.id });
+    const refreshToken = generateRefreshToken({ userId: user.id });
+    await UserModel.addRefreshToken(user.id, refreshToken);
+    setRefreshTokenCookie(res, refreshToken);
 
     res.json({
       success: true,
@@ -104,7 +130,7 @@ exports.login = async (req, res) => {
           role: user.role,
           email: user.email
         },
-        token
+        accessToken
       }
     });
   } catch (error) {
@@ -142,6 +168,99 @@ exports.getCurrentUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message || '获取用户信息失败'
+    });
+  }
+};
+
+/**
+ * 刷新 access token
+ */
+exports.refresh = async (req, res) => {
+  try {
+    const refreshToken = req.cookies?.refresh_token;
+    if (!refreshToken) {
+      return res.status(401).json({
+        success: false,
+        message: '未提供刷新令牌'
+      });
+    }
+
+    const decoded = verifyRefreshToken(refreshToken);
+    const user = await UserModel.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: '用户不存在'
+      });
+    }
+
+    const tokenOwner = await UserModel.findByRefreshToken(refreshToken);
+    if (!tokenOwner || tokenOwner.id !== user.id) {
+      return res.status(401).json({
+        success: false,
+        message: '刷新令牌无效'
+      });
+    }
+
+    // 旋转 refresh token
+    const newRefreshToken = generateRefreshToken({ userId: user.id });
+    await UserModel.replaceRefreshToken(user.id, refreshToken, newRefreshToken);
+    setRefreshTokenCookie(res, newRefreshToken);
+
+    const newAccessToken = generateAccessToken({ userId: user.id });
+
+    res.json({
+      success: true,
+      data: {
+        accessToken: newAccessToken
+      }
+  } catch (error) {
+    // 清理数据库中的刷新令牌，避免留下孤立令牌
+    const refreshToken = req.cookies?.refresh_token;
+    if (refreshToken) {
+      try {
+        const tokenOwner = await UserModel.findByRefreshToken(refreshToken);
+        if (tokenOwner) {
+          await UserModel.removeRefreshToken(tokenOwner.id, refreshToken);
+        }
+      } catch (cleanupError) {
+        // 忽略清理错误，继续返回原始刷新错误
+      }
+    }
+  } catch (error) {
+    clearRefreshTokenCookie(res);
+    return res.status(401).json({
+      success: false,
+      message: error.message || '刷新失败'
+    });
+  }
+};
+
+/**
+ * 退出登录
+ */
+exports.logout = async (req, res) => {
+  try {
+    const refreshToken = req.cookies?.refresh_token;
+    if (refreshToken) {
+      const tokenOwner = await UserModel.findByRefreshToken(refreshToken);
+      if (tokenOwner) {
+        await UserModel.removeRefreshToken(tokenOwner.id, refreshToken);
+      }
+    }
+
+    clearRefreshTokenCookie(res);
+
+    res.json({
+      success: true,
+      message: '已退出登录'
+    });
+  } catch (error) {
+    clearRefreshTokenCookie(res);
+    res.status(500).json({
+      success: false,
+      message: error.message || '退出失败'
     });
   }
 };

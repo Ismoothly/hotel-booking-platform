@@ -26,7 +26,7 @@ hotel-booking-platform/
 ### 后端
 - **框架**: Node.js + Express
 - **数据库**: 内存数据库（可扩展为MongoDB/MySQL）
-- **认证**: JWT
+- **认证**: JWT（双 Token）
 
 ## 功能模块
 
@@ -132,6 +132,9 @@ npm run build
 #### 认证
 - `POST /api/auth/register` - 用户注册
 - `POST /api/auth/login` - 用户登录
+- `POST /api/auth/refresh` - 刷新 access token（依赖 httpOnly Cookie）
+- `POST /api/auth/logout` - 退出登录（清理 refresh token）
+- `GET /api/auth/me` - 获取当前用户信息
 
 #### 酒店信息
 - `GET /api/hotels` - 获取酒店列表
@@ -179,8 +182,58 @@ npm run build
 3. 每个提交应该有明确的意义
 4. 可以使用开源UI组件库
 
+## 双 Token 认证说明
+
+本项目使用 Access Token + Refresh Token 双 Token 机制：
+
+- Access Token：短期有效（默认 15 分钟），通过 Authorization Bearer Header 传递。
+- Refresh Token：长期有效（默认 7 天），写入 httpOnly Cookie，仅用于刷新 Access Token。
+
+前端已内置 401 自动刷新逻辑：当 Access Token 过期会调用刷新接口，拿到新 Access Token 后重试原请求。
+
+## 示例请求流程
+
+### 1) 注册
+
+```bash
+curl -X POST http://localhost:5000/api/auth/register \
+   -H "Content-Type: application/json" \
+   -d '{"username":"demo","password":"demo123","email":"demo@hotel.com","role":"merchant"}'
+```
+
+响应会返回 `accessToken`，并通过 httpOnly Cookie 下发 `refresh_token`。
+
+### 2) 登录
+
+```bash
+curl -X POST http://localhost:5000/api/auth/login \
+   -H "Content-Type: application/json" \
+   -d '{"username":"demo","password":"demo123"}' \
+   -c cookie.txt
+```
+
+### 3) 访问受保护接口
+
+```bash
+curl http://localhost:5000/api/auth/me \
+   -H "Authorization: Bearer <ACCESS_TOKEN>"
+```
+
+### 4) 刷新 Access Token
+
+```bash
+curl -X POST http://localhost:5000/api/auth/refresh \
+   -b cookie.txt
+```
+
+### 5) 退出登录
+
+```bash
+curl -X POST http://localhost:5000/api/auth/logout \
+   -b cookie.txt
+```
+
+> 浏览器端需要开启 `withCredentials` 以发送 Cookie。
+
 ## 开发团队
-
-
-Remove-Item -Path "F:\hotel-booking-platform\hotel-booking-taro" -Recurse -Force
 

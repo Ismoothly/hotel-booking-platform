@@ -35,7 +35,7 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (username, password) => {
     const response = await authAPI.login({ username, password });
-    localStorage.setItem('admin_token', response.data.token);
+    localStorage.setItem('admin_token', response.data.accessToken);
     localStorage.setItem('admin_user', JSON.stringify(response.data.user));
     setUser(response.data.user);
     return response.data.user;
@@ -43,13 +43,18 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (userData) => {
     const response = await authAPI.register(userData);
-    localStorage.setItem('admin_token', response.data.token);
+    localStorage.setItem('admin_token', response.data.accessToken);
     localStorage.setItem('admin_user', JSON.stringify(response.data.user));
     setUser(response.data.user);
     return response.data.user;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      await authAPI.logout();
+    } catch (error) {
+      // 忽略退出失败
+    }
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
     setUser(null);
