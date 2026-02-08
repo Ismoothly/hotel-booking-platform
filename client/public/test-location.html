@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>定位功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .test-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        h2 {
+            color: #666;
+            font-size: 18px;
+            margin-top: 20px;
+            border-bottom: 2px solid #1677ff;
+            padding-bottom: 8px;
+        }
+        button {
+            background-color: #1677ff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 10px 10px 0;
+        }
+        button:hover {
+            background-color: #0958d9;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .status {
+            padding: 12px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .status.success { background-color: #f6ffed; border: 1px solid #b7eb8f; color: #52c41a; }
+        .status.error { background-color: #fff2f0; border: 1px solid #ffccc7; color: #ff4d4f; }
+        .status.info { background-color: #e6f7ff; border: 1px solid #91d5ff; color: #1890ff; }
+        .info-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .info-item:last-child {
+            border-bottom: none;
+        }
+        .label {
+            font-weight: bold;
+            display: inline-block;
+            width: 150px;
+            color: #666;
+        }
+        .value {
+            color: #333;
+        }
+        pre {
+            background-color: #f5f5f5;
+            padding: 12px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-card">
+        <h1>🗺️ 地理定位功能测试</h1>
+        <p>此页面用于测试和诊断浏览器定位功能问题</p>
+    </div>
+
+    <div class="test-card">
+        <h2>1. 浏览器环境检测</h2>
+        <div id="env-check"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>2. 定位功能测试</h2>
+        <button onclick="testGeolocation()">🎯 测试定位</button>
+        <button onclick="testPermission()">🔐 检查权限</button>
+        <button onclick="testWithOptions()">⚙️ 使用不同选项测试</button>
+        <div id="location-result"></div>
+    </div>
+
+    <div class="test-card">
+        <h2>3. 故障排查建议</h2>
+        <div id="troubleshooting"></div>
+    </div>
+
+    <script>
+        // 环境检测
+        function checkEnvironment() {
+            const envDiv = document.getElementById('env-check');
+            let html = '';
+
+            // 检查是否支持定位
+            html += `<div class="info-item">
+                <span class="label">定位API支持:</span>
+                <span class="value ${navigator.geolocation ? 'success' : 'error'}">
+                    ${navigator.geolocation ? '✅ 支持' : '❌ 不支持'}
+                </span>
+            </div>`;
+
+            // 检查协议
+            const isSecure = window.isSecureContext || 
+                           location.protocol === 'https:' || 
+                           location.hostname === 'localhost' ||
+                           location.hostname === '127.0.0.1';
+            html += `<div class="info-item">
+                <span class="label">安全上下文:</span>
+                <span class="value ${isSecure ? 'success' : 'error'}">
+                    ${isSecure ? '✅ ' : '❌ '}${location.protocol}//${location.hostname}
+                </span>
+            </div>`;
+
+            // 浏览器信息
+            html += `<div class="info-item">
+                <span class="label">浏览器:</span>
+                <span class="value">${navigator.userAgent}</span>
+            </div>`;
+
+            // 权限API支持
+            html += `<div class="info-item">
+                <span class="label">权限API:</span>
+                <span class="value">${navigator.permissions ? '✅ 支持' : '❌ 不支持'}</span>
+            </div>`;
+
+            envDiv.innerHTML = html;
+        }
+
+        // 测试定位
+        async function testGeolocation() {
+            const resultDiv = document.getElementById('location-result');
+            resultDiv.innerHTML = '<div class="status info">⏳ 正在定位中...</div>';
+
+            if (!navigator.geolocation) {
+                resultDiv.innerHTML = '<div class="status error">❌ 您的浏览器不支持定位功能</div>';
+                return;
+            }
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const { latitude, longitude, accuracy, altitude, altitudeAccuracy, heading, speed } = position.coords;
+                    const timestamp = new Date(position.timestamp).toLocaleString('zh-CN');
+
+                    let html = '<div class="status success">✅ 定位成功！</div>';
+                    html += '<h3>位置信息：</h3>';
+                    html += `<div class="info-item"><span class="label">纬度:</span><span class="value">${latitude}</span></div>`;
+                    html += `<div class="info-item"><span class="label">经度:</span><span class="value">${longitude}</span></div>`;
+                    html += `<div class="info-item"><span class="label">精度:</span><span class="value">${accuracy} 米</span></div>`;
+                    if (altitude !== null) html += `<div class="info-item"><span class="label">海拔:</span><span class="value">${altitude} 米</span></div>`;
+                    if (speed !== null) html += `<div class="info-item"><span class="label">速度:</span><span class="value">${speed} m/s</span></div>`;
+                    html += `<div class="info-item"><span class="label">时间:</span><span class="value">${timestamp}</span></div>`;
+                    
+                    html += '<h3>地图链接：</h3>';
+                    html += `<a href="https://www.google.com/maps?q=${latitude},${longitude}" target="_blank">📍 在Google地图中查看</a><br>`;
+                    html += `<a href="https://uri.amap.com/marker?position=${longitude},${latitude}" target="_blank">📍 在高德地图中查看</a>`;
+
+                    resultDiv.innerHTML = html;
+                },
+                (error) => {
+                    let errorMsg = '';
+                    let suggestion = '';
+
+                    switch (error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = '❌ 用户拒绝了定位请求';
+                            suggestion = '请点击浏览器地址栏左侧的图标，允许定位权限';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = '❌ 定位信息不可用';
+                            suggestion = `可能原因：<br>
+                                • 设备GPS未开启或不可用<br>
+                                • 网络定位服务不可用<br>
+                                • 室内信号差，建议移至窗边或室外<br>
+                                • 某些设备或浏览器限制了定位功能`;
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = '❌ 定位请求超时';
+                            suggestion = '请检查网络连接，或移至信号更好的位置';
+                            break;
+                        default:
+                            errorMsg = '❌ 未知错误';
+                            suggestion = error.message;
+                    }
+
+                    resultDiv.innerHTML = `
+                        <div class="status error">${errorMsg}</div>
+                        <p><strong>错误代码:</strong> ${error.code}</p>
+                        <p><strong>错误信息:</strong> ${error.message}</p>
+                        <p><strong>建议:</strong></p>
+                        <p>${suggestion}</p>
+                    `;
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        }
+
+        // 检查权限
+        async function testPermission() {
+            const resultDiv = document.getElementById('location-result');
+
+            if (!navigator.permissions || !navigator.permissions.query) {
+                resultDiv.innerHTML = '<div class="status info">ℹ️ 您的浏览器不支持权限查询API</div>';
+                return;
+            }
+
+            try {
+                const result = await navigator.permissions.query({ name: 'geolocation' });
+                let statusClass = 'info';
+                let icon = 'ℹ️';
+                let message = '';
+
+                switch (result.state) {
+                    case 'granted':
+                        statusClass = 'success';
+                        icon = '✅';
+                        message = '定位权限已授予';
+                        break;
+                    case 'prompt':
+                        statusClass = 'info';
+                        icon = '⚠️';
+                        message = '需要请求定位权限（首次使用时会提示）';
+                        break;
+                    case 'denied':
+                        statusClass = 'error';
+                        icon = '❌';
+                        message = '定位权限已被拒绝';
+                        break;
+                }
+
+                resultDiv.innerHTML = `
+                    <div class="status ${statusClass}">${icon} ${message}</div>
+                    <p><strong>权限状态:</strong> ${result.state}</p>
+                `;
+            } catch (error) {
+                resultDiv.innerHTML = `<div class="status error">权限查询失败: ${error.message}</div>`;
+            }
+        }
+
+        // 使用不同选项测试
+        async function testWithOptions() {
+            const resultDiv = document.getElementById('location-result');
+            resultDiv.innerHTML = '<div class="status info">⏳ 测试中（使用低精度模式）...</div>';
+
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    resultDiv.innerHTML = `
+                        <div class="status success">✅ 低精度定位成功！</div>
+                        <p>纬度: ${position.coords.latitude}</p>
+                        <p>经度: ${position.coords.longitude}</p>
+                        <p>精度: ${position.coords.accuracy} 米</p>
+                        <p><em>注意：低精度模式通常更快，但精度较低（数百米到数公里）</em></p>
+                    `;
+                },
+                (error) => {
+                    resultDiv.innerHTML = `<div class="status error">❌ 低精度定位也失败了: ${error.message}</div>`;
+                },
+                {
+                    enableHighAccuracy: false,  // 低精度模式
+                    timeout: 15000,
+                    maximumAge: 300000  // 允许使用5分钟内的缓存
+                }
+            );
+        }
+
+        // 故障排查
+        function showTroubleshooting() {
+            const troubleDiv = document.getElementById('troubleshooting');
+            troubleDiv.innerHTML = `
+                <div class="info-item">
+                    <strong>如果显示"定位信息不可用"：</strong><br>
+                    1. <strong>开启设备定位服务：</strong><br>
+                       • Windows: 设置 → 隐私 → 位置 → 确保已开启<br>
+                       • macOS: 系统偏好设置 → 安全性与隐私 → 隐私 → 定位服务<br>
+                       • Android/iOS: 设置 → 位置/定位服务 → 开启<br><br>
+                    
+                    2. <strong>检查网络连接：</strong><br>
+                       • 定位可能需要网络辅助（Wi-Fi定位、基站定位）<br>
+                       • 确保网络连接正常<br><br>
+                    
+                    3. <strong>移至开阔位置：</strong><br>
+                       • 室内定位可能不准或不可用<br>
+                       • 尝试移至窗边或室外<br><br>
+                    
+                    4. <strong>使用HTTPS：</strong><br>
+                       • 生产环境必须使用HTTPS<br>
+                       • 本地测试可使用localhost<br><br>
+                    
+                    5. <strong>重置浏览器权限：</strong><br>
+                       • Chrome: 设置 → 隐私和安全 → 网站设置 → 位置<br>
+                       • Firefox: 设置 → 隐私与安全 → 权限 → 位置<br>
+                       • Edge: 类似Chrome设置
+                </div>
+            `;
+        }
+
+        // 页面加载时执行
+        window.onload = function() {
+            checkEnvironment();
+            showTroubleshooting();
+        };
+    </script>
+</body>
+</html>

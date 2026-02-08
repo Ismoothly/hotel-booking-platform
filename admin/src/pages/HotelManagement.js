@@ -245,6 +245,7 @@ const HotelManagement = () => {
           <Form.Item name="city" label="城市" rules={[{ required: true, message: '请选择城市' }]}>
             <Select placeholder="请选择城市">
               <Option value="北京">北京</Option>
+              <Option value="天津">天津</Option>
               <Option value="上海">上海</Option>
               <Option value="广州">广州</Option>
               <Option value="深圳">深圳</Option>

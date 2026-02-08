@@ -138,7 +138,7 @@
 }
 
 .rooms-section {
-  margin: 0 12px;
+  margin: 0 12px 80px;
 }
 
 .section-title {
@@ -187,4 +187,27 @@
 .price-unit {
   font-size: 14px;
   color: #999;
+}
+.detail-footer {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 12px;
+  background-color: #fff;
+  border-top: 1px solid #eee;
+  display: flex;
+  gap: 12px;
+  z-index: 10;
+}
+
+.detail-footer a {
+  flex: 1;
+}
+
+@media (min-width: 768px) {
+  .detail-footer {
+    max-width: 600px;
+    margin: 0 auto;
+  }
 }
