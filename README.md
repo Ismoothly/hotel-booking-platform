@@ -291,65 +291,6 @@ PS F:\hotel-booking-platform> .\test-double-token.ps1
   OK Logout successful
   OK Refresh token invalidated (expected)
 
-========================================
-OK All tests passed! Double token mechanism working
-========================================
-## 示例请求流程
-
-### 1) 注册
-
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-   -H "Content-Type: application/json" \
-   -d '{"username":"demo","password":"demo123","email":"demo@hotel.com","role":"merchant"}'
-```
-
-响应会返回 `accessToken`，并通过 httpOnly Cookie 下发 `refresh_token`。
-
-### 2) 登录
-
-```bash
-curl -X POST http://localhost:5000/api/auth/login \
-   -H "Content-Type: application/json" \
-   -d '{"username":"demo","password":"demo123"}' \
-   -c cookie.txt
-```
-
-### 3) 访问受保护接口
-
-```bash
-curl http://localhost:5000/api/auth/me \
-   -H "Authorization: Bearer <ACCESS_TOKEN>"
-```
-
-### 4) 刷新 Access Token
-
-```bash
-curl -X POST http://localhost:5000/api/auth/refresh \
-   -b cookie.txt
-```
-
-### 5) 退出登录
-
-```bash
-curl -X POST http://localhost:5000/api/auth/logout \
-   -b cookie.txt
-```
-
-> 浏览器端需要开启 `withCredentials` 以发送 Cookie。
-
-## 📚 MongoDB 相关文档
-
-本项目已完全支持 MongoDB！相关文档：
-
-| 文档 | 说明 | 阅读时间 |
-|------|------|--------|
-| [MONGODB_QUICK_START.md](./MONGODB_QUICK_START.md) | ⚡ **快速开始** - 5分钟快速部署 | 10 分钟 |
-| [MONGODB_MIGRATION_GUIDE.md](./MONGODB_MIGRATION_GUIDE.md) | 📖 详细迁移指南和配置说明 | 30 分钟 |
-| [MONGODB_MIGRATION_EXAMPLES.md](./MONGODB_MIGRATION_EXAMPLES.md) | 💡 代码迁移示例和最佳实践 | 20 分钟 |
-| [MONGODB_ROUTES_EXAMPLE.js](./MONGODB_ROUTES_EXAMPLE.js) | 🔗 完整的 RESTful API 实现 | 15 分钟 |
-| [MONGODB_COMPLETION_CHECKLIST.md](./MONGODB_COMPLETION_CHECKLIST.md) | ✅ 完成清单和工作指南 | 5 分钟 |
-
 ### MongoDB 核心特性
 
 ✨ 已为项目集成：
