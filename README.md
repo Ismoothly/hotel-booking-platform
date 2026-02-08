@@ -144,7 +144,7 @@ npm run build
 - 密码: admin123
 
 ### 商户账号
-- 用户名: merchant
+- 用户名: merchant1
 - 密码: merchant123
 
 ## API文档
