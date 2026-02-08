@@ -1,7 +1,8 @@
 import axios from 'axios';
 
+// 使用完整 URL 而不是相对路径，避免代理问题
 const api = axios.create({
-  baseURL: '/api',
+  baseURL: 'http://localhost:5000/api',
   timeout: 10000,
   withCredentials: true,
   headers: {

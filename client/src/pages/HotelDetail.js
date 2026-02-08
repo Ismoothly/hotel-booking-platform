@@ -46,6 +46,20 @@ const HotelDetail = () => {
   };
 
   const handleAddToCart = async (room) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      Modal.confirm({
+        title: '需要登录',
+        content: '登录后才能加入购物车',
+        okText: '去登录',
+        cancelText: '取消',
+        onOk() {
+          navigate('/login');
+        }
+      });
+      return;
+    }
+
     const nights = dayjs(searchParams.checkOut).diff(dayjs(searchParams.checkIn), 'day');
     
     // 验证日期

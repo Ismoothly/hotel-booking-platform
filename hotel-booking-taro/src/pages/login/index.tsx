@@ -13,7 +13,7 @@ export default function Login() {
     // 检查是否已登录
     const token = Taro.getStorageSync('user_token')
     if (token) {
-      Taro.redirectTo({ url: '/pages/index/index' })
+      Taro.switchTab({ url: '/pages/index/index' })
     }
   })
 
@@ -31,8 +31,8 @@ export default function Login() {
       const response = await authAPI.login(username, password)
       if (response.success) {
         // 保存 token 和用户信息
-        Taro.setStorageSync('user_token', response.data.token)
-        Taro.setStorageSync('user_info', JSON.stringify(response.data.user))
+        Taro.setStorageSync('user_token', response.data.accessToken)
+        Taro.setStorageSync('user_info', response.data.user)
         
         Taro.showToast({
           title: '登录成功',
@@ -41,7 +41,7 @@ export default function Login() {
 
         // 延迟跳转到首页
         setTimeout(() => {
-          Taro.redirectTo({ url: '/pages/index/index' })
+          Taro.switchTab({ url: '/pages/index/index' })
         }, 1000)
       }
     } catch (error: any) {

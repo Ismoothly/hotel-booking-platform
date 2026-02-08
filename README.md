@@ -33,25 +33,51 @@ hotel-booking-platform/
 
 ## 功能模块
 
-### 用户端（移动端）
+### 用户端（移动端 / 小程序）
 1. **酒店查询页**
    - 顶部Banner广告
-   - 地点定位
+   - 地点定位（GPS + IP定位）
    - 关键字搜索
    - 入住日期选择
    - 筛选条件（星级、价格）
    - 快捷标签
+   - 支持11个主要城市
 
 2. **酒店列表页**
    - 核心条件筛选
    - 详细筛选
-   - 酒店列表（支持滚动加载）
+   - 酒店列表（支持分页加载）
+   - 多条件组合搜索
 
 3. **酒店详情页**
    - 酒店图片轮播
    - 基础信息展示
-   - 日历选择
+   - 日历选择（入住/离店日期）
    - 房型价格列表
+   - **🛒 加入购物车**（一键添加）
+   - 实时价格计算
+
+4. **购物车页面** ✨ NEW
+   - 查看已选房间
+   - 修改数量
+   - 删除商品
+   - 清空购物车
+   - 价格汇总
+   - 前往结算
+
+5. **订单管理页面** ✨ NEW
+   - 订单列表（全部/待支付/已确认/已支付/已取消）
+   - 订单详情查看
+   - 支付订单
+   - 取消订单
+   - 订单状态实时更新
+
+6. **订单结算页面** ✨ NEW
+   - 填写入住人信息
+   - 联系电话
+   - 电子邮箱（可选）
+   - 特殊需求备注
+   - 一键下单
 
 ### 管理端（PC端）
 1. **用户登录/注册**
@@ -75,7 +101,21 @@ hotel-booking-platform/
 ```bash
 # 1. 启动 MongoDB (Docker)
 docker run -d -p 27017:27017 --name mongodb mongo:latest
-
+# #如果失败，重建容器：
+# docker rm -f mongodb
+# docker run -d -p 27017:27017 --name mongodb `
+#   -e MONGO_INITDB_ROOT_USERNAME=admin `
+#   -e MONGO_INITDB_ROOT_PASSWORD=admin123 `
+#   mongo:latest
+#   然后再测：
+#   docker run --rm -it mongo:latest mongosh `
+#   "mongodb://admin:admin123@host.docker.internal:27017/admin?authSource=admin" `
+#   --eval "db.runCommand({connectionStatus:1})"
+# 直接连容器网络
+# docker run --rm -it --network container:mongodb mongo:latest mongosh `
+#   "mongodb://admin:admin123@localhost:27017/admin?authSource=admin" `
+#   --eval "db.runCommand({connectionStatus:1})"
+# mongDB CONNECT STRING :mongodb://admin:admin123@localhost:27017/admin
 # 2. 配置环境变量
 cd server
 cp .env.example .env
@@ -109,7 +149,7 @@ npm run dev:admin       # 启动管理端（端口3001）
 npm run dev:server      # 启动后端服务（端口5000）
 npm run dev:taro        # 启动小程序开发服务
 ```
-
+结束占用端口的进程：netstat -ano | findstr :5000   taskkill /PID 29908 /F
 ### Taro 小程序编译
 
 ```bash
@@ -250,65 +290,6 @@ PS F:\hotel-booking-platform> .\test-double-token.ps1
 [Test 5] Logout...
   OK Logout successful
   OK Refresh token invalidated (expected)
-
-========================================
-OK All tests passed! Double token mechanism working
-========================================
-## 示例请求流程
-
-### 1) 注册
-
-```bash
-curl -X POST http://localhost:5000/api/auth/register \
-   -H "Content-Type: application/json" \
-   -d '{"username":"demo","password":"demo123","email":"demo@hotel.com","role":"merchant"}'
-```
-
-响应会返回 `accessToken`，并通过 httpOnly Cookie 下发 `refresh_token`。
-
-### 2) 登录
-
-```bash
-curl -X POST http://localhost:5000/api/auth/login \
-   -H "Content-Type: application/json" \
-   -d '{"username":"demo","password":"demo123"}' \
-   -c cookie.txt
-```
-
-### 3) 访问受保护接口
-
-```bash
-curl http://localhost:5000/api/auth/me \
-   -H "Authorization: Bearer <ACCESS_TOKEN>"
-```
-
-### 4) 刷新 Access Token
-
-```bash
-curl -X POST http://localhost:5000/api/auth/refresh \
-   -b cookie.txt
-```
-
-### 5) 退出登录
-
-```bash
-curl -X POST http://localhost:5000/api/auth/logout \
-   -b cookie.txt
-```
-
-> 浏览器端需要开启 `withCredentials` 以发送 Cookie。
-
-## 📚 MongoDB 相关文档
-
-本项目已完全支持 MongoDB！相关文档：
-
-| 文档 | 说明 | 阅读时间 |
-|------|------|--------|
-| [MONGODB_QUICK_START.md](./MONGODB_QUICK_START.md) | ⚡ **快速开始** - 5分钟快速部署 | 10 分钟 |
-| [MONGODB_MIGRATION_GUIDE.md](./MONGODB_MIGRATION_GUIDE.md) | 📖 详细迁移指南和配置说明 | 30 分钟 |
-| [MONGODB_MIGRATION_EXAMPLES.md](./MONGODB_MIGRATION_EXAMPLES.md) | 💡 代码迁移示例和最佳实践 | 20 分钟 |
-| [MONGODB_ROUTES_EXAMPLE.js](./MONGODB_ROUTES_EXAMPLE.js) | 🔗 完整的 RESTful API 实现 | 15 分钟 |
-| [MONGODB_COMPLETION_CHECKLIST.md](./MONGODB_COMPLETION_CHECKLIST.md) | ✅ 完成清单和工作指南 | 5 分钟 |
 
 ### MongoDB 核心特性
 

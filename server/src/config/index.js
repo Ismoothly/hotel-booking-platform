@@ -9,6 +9,21 @@ if (jwtAccessSecret === jwtRefreshSecret) {
   console.warn('Security warning: JWT access and refresh secrets are identical.');
 }
 
+// CORS origins - 允许开发环境来自任何地方的请求
+const getCorsOrigins = () => {
+  if (process.env.CORS_ORIGINS) {
+    return process.env.CORS_ORIGINS.split(',');
+  }
+  
+  // 开发环境允许所有来源，生产环境需要明确指定
+  if (process.env.NODE_ENV === 'production') {
+    return ['http://localhost:3000', 'http://localhost:3001'];
+  }
+  
+  // 开发环境允许所有来源（用于真机测试）
+  return '*';
+};
+
 module.exports = {
   port: process.env.PORT || 5000,
   env: process.env.NODE_ENV || 'development',
@@ -16,5 +31,5 @@ module.exports = {
   jwtRefreshSecret,
   jwtAccessExpire: process.env.JWT_ACCESS_EXPIRE || '15m',
   jwtRefreshExpire: process.env.JWT_REFRESH_EXPIRE || '7d',
-  corsOrigins: process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(',') : ['http://localhost:3000', 'http://localhost:3001']
+  corsOrigins: getCorsOrigins()
 };

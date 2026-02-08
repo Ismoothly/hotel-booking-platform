@@ -9,6 +9,7 @@ import HotelList from './pages/HotelList';
 import HotelDetail from './pages/HotelDetail';
 import Cart from './pages/Cart';
 import Orders from './pages/Orders';
+import Login from './pages/Login';
 
 import './App.css';
 
@@ -24,6 +25,7 @@ function App() {
               <Route path="/hotel/:id" element={<HotelDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/orders" element={<Orders />} />
+              <Route path="/login" element={<Login />} />
             </Routes>
           </div>
         </CartProvider>

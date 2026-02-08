@@ -1,6 +1,6 @@
 import { View, Button, Text } from '@tarojs/components'
 import { useState, useEffect } from 'react'
-import Taro, { useLoad } from '@tarojs/taro'
+import Taro, { useDidShow, useLoad } from '@tarojs/taro'
 import './index.scss'
 
 interface UserInfo {
@@ -17,11 +17,15 @@ export default function User() {
     loadUserInfo()
   })
 
+  useDidShow(() => {
+    loadUserInfo()
+  })
+
   const loadUserInfo = () => {
     const userStr = Taro.getStorageSync('user_info')
     if (userStr) {
       try {
-        const user = JSON.parse(userStr)
+        const user = typeof userStr === 'string' ? JSON.parse(userStr) : userStr
         setUserInfo(user)
       } catch (e) {
         console.error('Failed to parse user info')

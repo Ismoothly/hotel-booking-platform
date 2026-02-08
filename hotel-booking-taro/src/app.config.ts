@@ -4,6 +4,9 @@ export default defineAppConfig({
     'pages/login/index',
     'pages/register/index',
     'pages/hotel-detail/index',
+    'pages/cart/index',
+    'pages/checkout/index',
+    'pages/orders/index',
     'pages/user/index'
   ],
   tabBar: {
@@ -17,6 +20,14 @@ export default defineAppConfig({
         text: '首页'
       },
       {
+        pagePath: 'pages/cart/index',
+        text: '购物车'
+      },
+      {
+        pagePath: 'pages/orders/index',
+        text: '订单'
+      },
+      {
         pagePath: 'pages/user/index',
         text: '我的'
       }
@@ -27,6 +38,11 @@ export default defineAppConfig({
     navigationBarBackgroundColor: '#fff',
     navigationBarTitleText: '易宿酒店',
     navigationBarTextStyle: 'black'
+  },
+  permission: {
+    'scope.userLocation': {
+      desc: '您的位置信息将用于获取附近酒店推荐'
+    }
   }
 })
 
