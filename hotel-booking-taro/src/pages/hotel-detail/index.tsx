@@ -11,7 +11,7 @@ interface Room {
 }
 
 interface Hotel {
-  id: string
+  _id: string
   nameCn: string
   nameEn: string
   starRating: number
@@ -99,7 +99,7 @@ export default function HotelDetail() {
 
     try {
       const response = await cartAPI.addToCart({
-        hotelId: hotel!.id,
+        hotelId: hotel!._id,
         roomType: selectedRoom.type,
         checkInDate,
         checkOutDate,

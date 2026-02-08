@@ -38,6 +38,11 @@ export default defineAppConfig({
     navigationBarBackgroundColor: '#fff',
     navigationBarTitleText: '易宿酒店',
     navigationBarTextStyle: 'black'
+  },
+  permission: {
+    'scope.userLocation': {
+      desc: '您的位置信息将用于获取附近酒店推荐'
+    }
   }
 })
 

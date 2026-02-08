@@ -1,7 +1,24 @@
 import Taro from '@tarojs/taro'
 
-// API 基础配置
-const API_BASE_URL = 'http://localhost:5000/api'
+// API 基础配置 - 真机环境下需要改成宿主机IP
+// 开发环境: http://localhost:5000/api
+// 真机测试: http://<你的电脑局域网IP>:5000/api (例如: http://192.168.1.100:5000/api)
+const getAPIBaseURL = () => {
+  // 如果是真机环境，可以从本地存储读取配置的后端地址
+  const customURL = Taro.getStorageSync('API_BASE_URL')
+  if (customURL) {
+    return customURL
+  }
+  return 'http://localhost:5000/api'
+}
+
+let API_BASE_URL = getAPIBaseURL()
+
+// 导出函数以便动态修改API地址
+export const setAPIBaseURL = (url: string) => {
+  API_BASE_URL = url
+  Taro.setStorageSync('API_BASE_URL', url)
+}
 
 interface RequestConfig {
   url: string
@@ -43,8 +60,17 @@ const request = async (config: RequestConfig) => {
 
     return response.data
   } catch (error: any) {
+    console.error('🔴 API 请求失败:', {
+      url: config.url,
+      baseURL: API_BASE_URL,
+      method: config.method,
+      error: error.message,
+      errMsg: error.errMsg
+    })
+    
+    const errorMsg = error.message || error.errMsg || '网络请求失败'
     Taro.showToast({
-      title: error.message || '网络请求失败',
+      title: errorMsg,
       icon: 'none'
     })
     return Promise.reject(error)
