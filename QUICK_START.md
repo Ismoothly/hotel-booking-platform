@@ -16,11 +16,11 @@ cd server
 npm install
 
 # 安装用户端依赖
-cd ../client
+cd ./client
 npm install
 
 # 安装管理端依赖
-cd ../admin
+cd ./admin
 npm install
 ```
 

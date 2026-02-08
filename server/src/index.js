@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const cookieParser = require('cookie-parser');
 const config = require('./config');
+const { connectDB } = require('./config/database');
 
 // 导入路由
 const authRoutes = require('./routes/auth');
@@ -63,12 +64,37 @@ app.use((err, req, res, next) => {
 // 启动服务器
 const PORT = config.port;
 
-app.listen(PORT, () => {
-  console.log('=================================');
-  console.log(`Server is running on port ${PORT}`);
-  console.log(`Environment: ${config.env}`);
-  console.log(`API URL: http://localhost:${PORT}`);
-  console.log('=================================');
+async function startServer() {
+  try {
+    // 连接到 MongoDB
+    await connectDB();
+
+    app.listen(PORT, () => {
+      console.log('=================================');
+      console.log(`Server is running on port ${PORT}`);
+      console.log(`Environment: ${config.env}`);
+      console.log(`API URL: http://localhost:${PORT}`);
+      console.log('=================================');
+    });
+  } catch (err) {
+    console.error('服务器启动失败:', err.message);
+    process.exit(1);
+  }
+}
+
+// 处理进程中断信号
+process.on('SIGINT', async () => {
+  console.log('\n正在关闭服务器...');
+  try {
+    await require('./config/database').disconnectDB();
+    process.exit(0);
+  } catch (err) {
+    console.error('关闭时出错:', err);
+    process.exit(1);
+  }
 });
+
+// 启动应用
+startServer();
 
 module.exports = app;

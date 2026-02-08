@@ -25,7 +25,10 @@ hotel-booking-platform/
 
 ### 后端
 - **框架**: Node.js + Express
-- **数据库**: 内存数据库（可扩展为MongoDB/MySQL）
+- **数据库**: 
+  - 默认: 内存数据库
+  - **推荐**: MongoDB + Mongoose ODM（✨ 已集成）
+  - 可选: MySQL/PostgreSQL
 - **认证**: JWT（双 Token）
 
 ## 功能模块
@@ -64,6 +67,28 @@ hotel-booking-platform/
    - 酒店下线
 
 ## 快速开始
+
+### 📦 MongoDB 设置（推荐）
+
+本项目已集成 MongoDB 支持。如要使用 MongoDB：
+
+```bash
+# 1. 启动 MongoDB (Docker)
+docker run -d -p 27017:27017 --name mongodb mongo:latest
+
+# 2. 配置环境变量
+cd server
+cp .env.example .env
+# 编辑 .env，设置 MONGODB_URI
+
+# 3. 初始化数据（可选）
+node scripts/seed.js
+```
+
+详细说明请参考：
+- [MongoDB 快速开始指南](./MONGODB_QUICK_START.md)
+- [完整迁移指南](./MONGODB_MIGRATION_GUIDE.md)
+- [完成清单与工作指南](./MONGODB_COMPLETION_CHECKLIST.md)
 
 ### 安装依赖
 
@@ -272,6 +297,52 @@ curl -X POST http://localhost:5000/api/auth/logout \
 ```
 
 > 浏览器端需要开启 `withCredentials` 以发送 Cookie。
+
+## 📚 MongoDB 相关文档
+
+本项目已完全支持 MongoDB！相关文档：
+
+| 文档 | 说明 | 阅读时间 |
+|------|------|--------|
+| [MONGODB_QUICK_START.md](./MONGODB_QUICK_START.md) | ⚡ **快速开始** - 5分钟快速部署 | 10 分钟 |
+| [MONGODB_MIGRATION_GUIDE.md](./MONGODB_MIGRATION_GUIDE.md) | 📖 详细迁移指南和配置说明 | 30 分钟 |
+| [MONGODB_MIGRATION_EXAMPLES.md](./MONGODB_MIGRATION_EXAMPLES.md) | 💡 代码迁移示例和最佳实践 | 20 分钟 |
+| [MONGODB_ROUTES_EXAMPLE.js](./MONGODB_ROUTES_EXAMPLE.js) | 🔗 完整的 RESTful API 实现 | 15 分钟 |
+| [MONGODB_COMPLETION_CHECKLIST.md](./MONGODB_COMPLETION_CHECKLIST.md) | ✅ 完成清单和工作指南 | 5 分钟 |
+
+### MongoDB 核心特性
+
+✨ 已为项目集成：
+
+- ✅ **Mongoose 数据模型**：User 和 Hotel 模型，包含完整验证和钩子
+- ✅ **自动连接管理**：生产级数据库连接配置，支持多环境
+- ✅ **密码加密**：自动 bcrypt 哈希处理（pre-save 钩子）
+- ✅ **索引优化**：文本索引和复合索引，提升查询性能
+- ✅ **数据验证**：Schema 级别的字段验证和类型检查
+- ✅ **数据种子脚本**：快速初始化示例数据（4个用户 + 4家酒店）
+- ✅ **错误处理**：MongoDB 特定错误处理（ValidationError, E11000 等）
+- ✅ **聚合管道**：支持复杂查询（按城市分组、统计等）
+
+### 快速启动 MongoDB
+
+```bash
+# Docker 启动（推荐）
+docker run -d -p 27017:27017 --name mongodb mongo:latest
+
+# 初始化应用
+cd server
+npm install
+cp .env.example .env
+# 编辑 .env，设置 MONGODB_URI=mongodb://localhost:27017/hotel-booking-dev
+
+# 初始化数据（可选）
+node scripts/seed.js
+
+# 启动服务器
+npm run dev
+```
+
+💡 **提示**: 详细说明见 [MONGODB_QUICK_START.md](./MONGODB_QUICK_START.md)
 
 ## 开发团队
 
