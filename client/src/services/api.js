@@ -30,9 +30,12 @@ api.interceptors.request.use(
 // 响应拦截器
 api.interceptors.response.use(
   (response) => {
+    console.log('[API] ✅ 响应成功:', response.config.url, response.status);
     return response.data;
   },
   async (error) => {
+    console.error('[API] ❌ 响应错误:', error.config?.url, error.response?.status, error.response?.data);
+    
     if (error.response) {
       // 处理401未授权错误
       if (error.response.status === 401) {

@@ -59,15 +59,43 @@
 
 .search-item {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
   padding: 12px 0;
   border-bottom: 1px solid #f0f0f0;
+}
+
+.search-item-row {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.search-item:last-of-type {
+  border-bottom: none;
 }
 
 .search-label {
   font-size: 14px;
   color: #666;
+}
+
+.search-label-with-location {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 8px;
+}
+
+.location-button {
+  font-size: 13px;
+  color: #1677ff;
+  padding: 0 8px;
+  height: 24px;
+}
+
+.location-button:active {
+  opacity: 0.7;
 }
 
 .search-value {

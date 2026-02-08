@@ -26,6 +26,7 @@ const HotelList = () => {
 
   const cityOptions = [
     { label: '北京', value: '北京' },
+    { label: '天津', value: '天津' },
     { label: '上海', value: '上海' },
     { label: '广州', value: '广州' },
     { label: '深圳', value: '深圳' },
