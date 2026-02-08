@@ -335,6 +335,11 @@ const Home = () => {
         gap: '8px',
         borderBottom: '1px solid #eee'
       }}>
+        <Link to="/login" style={{ textDecoration: 'none' }}>
+          <Button size="small" color="primary" fill>
+            🔐 登录
+          </Button>
+        </Link>
         <Link to="/cart" style={{ textDecoration: 'none' }}>
           <Button size="small" color="default" fill>
             🛒 购物车

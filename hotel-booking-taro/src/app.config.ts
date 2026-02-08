@@ -4,6 +4,9 @@ export default defineAppConfig({
     'pages/login/index',
     'pages/register/index',
     'pages/hotel-detail/index',
+    'pages/cart/index',
+    'pages/checkout/index',
+    'pages/orders/index',
     'pages/user/index'
   ],
   tabBar: {
@@ -15,6 +18,14 @@ export default defineAppConfig({
       {
         pagePath: 'pages/index/index',
         text: '首页'
+      },
+      {
+        pagePath: 'pages/cart/index',
+        text: '购物车'
+      },
+      {
+        pagePath: 'pages/orders/index',
+        text: '订单'
       },
       {
         pagePath: 'pages/user/index',

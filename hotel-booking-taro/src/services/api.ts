@@ -107,4 +107,88 @@ export const hotelAPI = {
     })
 }
 
+/**
+ * 购物车 API
+ */
+export const cartAPI = {
+  getCart: () =>
+    request({
+      url: '/cart',
+      method: 'GET'
+    }),
+  addToCart: (data: {
+    hotelId: string
+    roomType: string
+    checkInDate: string
+    checkOutDate: string
+    quantity?: number
+  }) =>
+    request({
+      url: '/cart',
+      method: 'POST',
+      data
+    }),
+  updateCartItem: (itemIndex: number, quantity: number) =>
+    request({
+      url: '/cart/item',
+      method: 'PUT',
+      data: { itemIndex, quantity }
+    }),
+  removeCartItem: (itemIndex: number) =>
+    request({
+      url: '/cart/item',
+      method: 'DELETE',
+      data: { itemIndex }
+    }),
+  clearCart: () =>
+    request({
+      url: '/cart',
+      method: 'DELETE'
+    })
+}
+
+/**
+ * 订单 API
+ */
+export const orderAPI = {
+  getMyOrders: (params?: { status?: string; page?: number; limit?: number }) =>
+    request({
+      url: `/orders?${new URLSearchParams(params as any).toString()}`,
+      method: 'GET'
+    }),
+  getOrderDetail: (orderId: string) =>
+    request({
+      url: `/orders/${orderId}`,
+      method: 'GET'
+    }),
+  createOrder: (data: {
+    guestName: string
+    guestPhone: string
+    guestEmail?: string
+    notes?: string
+    paymentMethod?: string
+  }) =>
+    request({
+      url: '/orders',
+      method: 'POST',
+      data
+    }),
+  confirmOrder: (orderId: string) =>
+    request({
+      url: `/orders/${orderId}/confirm`,
+      method: 'PUT'
+    }),
+  completePayment: (orderId: string) =>
+    request({
+      url: `/orders/${orderId}/pay`,
+      method: 'PUT'
+    }),
+  cancelOrder: (orderId: string, reason?: string) =>
+    request({
+      url: `/orders/${orderId}/cancel`,
+      method: 'PUT',
+      data: { reason }
+    })
+}
+
 export default request

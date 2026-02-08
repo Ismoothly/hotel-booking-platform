@@ -1,7 +1,7 @@
-import { View, Image, Swiper, SwiperItem, Text, Button, ScrollView } from '@tarojs/components'
+import { View, Image, Swiper, SwiperItem, Text, Button, ScrollView, Picker } from '@tarojs/components'
 import { useState, useEffect } from 'react'
 import Taro, { useLoad, useRouter } from '@tarojs/taro'
-import { hotelAPI } from '../../services/api'
+import { hotelAPI, cartAPI } from '../../services/api'
 import './index.scss'
 
 interface Room {
@@ -29,13 +29,28 @@ export default function HotelDetail() {
   const [hotel, setHotel] = useState<Hotel | null>(null)
   const [loading, setLoading] = useState(true)
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null)
+  const [checkInDate, setCheckInDate] = useState('')
+  const [checkOutDate, setCheckOutDate] = useState('')
 
   useLoad(() => {
     const { id } = router.params
     if (id) {
       fetchHotelDetail(id)
     }
+    // 设置默认日期（今天和明天）
+    const today = new Date()
+    const tomorrow = new Date(today)
+    tomorrow.setDate(tomorrow.getDate() + 1)
+    setCheckInDate(formatDateForPicker(today))
+    setCheckOutDate(formatDateForPicker(tomorrow))
   })
+
+  const formatDateForPicker = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
 
   const fetchHotelDetail = async (hotelId: string) => {
     try {
@@ -55,7 +70,16 @@ export default function HotelDetail() {
     }
   }
 
-  const handleBooking = () => {
+  const calculateNights = () => {
+    if (!checkInDate || !checkOutDate) return 0
+    const checkIn = new Date(checkInDate)
+    const checkOut = new Date(checkOutDate)
+    const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime())
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays
+  }
+
+  const handleAddToCart = async () => {
     if (!selectedRoom) {
       Taro.showToast({
         title: '请选择房型',
@@ -63,9 +87,43 @@ export default function HotelDetail() {
       })
       return
     }
-    Taro.navigateTo({
-      url: `/pages/booking/index?hotelId=${hotel?.id}&roomType=${selectedRoom.type}&price=${selectedRoom.price}`
-    })
+
+    const nights = calculateNights()
+    if (nights <= 0) {
+      Taro.showToast({
+        title: '请选择有效的入住日期',
+        icon: 'none'
+      })
+      return
+    }
+
+    try {
+      const response = await cartAPI.addToCart({
+        hotelId: hotel!.id,
+        roomType: selectedRoom.type,
+        checkInDate,
+        checkOutDate,
+        quantity: 1
+      })
+
+      if (response.code === 200) {
+        const result = await Taro.showModal({
+          title: '成功添加到购物车',
+          content: '是否前往购物车结账？',
+          confirmText: '前往',
+          cancelText: '继续购物'
+        })
+
+        if (result.confirm) {
+          Taro.switchTab({ url: '/pages/cart/index' })
+        }
+      }
+    } catch (error: any) {
+      Taro.showToast({
+        title: error.message || '添加失败',
+        icon: 'none'
+      })
+    }
   }
 
   if (loading) {
@@ -172,17 +230,58 @@ export default function HotelDetail() {
               >
                 <View className='room-type'>{room.type}</View>
                 <View className='room-description'>{room.description}</View>
-                <View className='room-price'>¥{room.price}</View>
+                <View className='room-price'>¥{room.price}/晚</View>
               </View>
             ))}
           </View>
         </View>
       )}
 
-      {/* 预订按钮 */}
+      {/* 日期选择 */}
+      <View className='section date-section'>
+        <View className='section-title'>入住日期</View>
+        <View className='date-picker-row'>
+          <Picker
+            mode='date'
+            value={checkInDate}
+            onChange={(e) => setCheckInDate(e.detail.value)}
+          >
+            <View className='date-picker'>
+              <Text className='date-label'>入住:</Text>
+              <Text className='date-value'>{checkInDate}</Text>
+            </View>
+          </Picker>
+          <Text className='date-separator'>至</Text>
+          <Picker
+            mode='date'
+            value={checkOutDate}
+            onChange={(e) => setCheckOutDate(e.detail.value)}
+          >
+            <View className='date-picker'>
+              <Text className='date-label'>离店:</Text>
+              <Text className='date-value'>{checkOutDate}</Text>
+            </View>
+          </Picker>
+        </View>
+        <View className='nights-info'>
+          共 {calculateNights()} 晚
+        </View>
+      </View>
+
+      {/* 底部栏 */}
       <View className='booking-footer'>
-        <Button className='booking-btn' onClick={handleBooking}>
-          立即预订
+        <View className='price-info'>
+          {selectedRoom && (
+            <>
+              <Text className='price-label'>总价:</Text>
+              <Text className='price-amount'>
+                ¥{(selectedRoom.price * calculateNights()).toFixed(2)}
+              </Text>
+            </>
+          )}
+        </View>
+        <Button className='cart-btn' onClick={handleAddToCart}>
+          🛒 加入购物车
         </Button>
       </View>
     </ScrollView>
