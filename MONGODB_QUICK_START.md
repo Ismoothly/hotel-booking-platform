@@ -21,7 +21,8 @@
 ```bash
 # 启动 MongoDB Docker 容器
 docker run -d -p 27017:27017 --name mongodb mongo:latest
-
+# 启动已有容器
+docker start mongodb
 # 验证连接
 mongosh  # 如果已安装 MongoDB CLI
 ```
