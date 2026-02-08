@@ -24,6 +24,19 @@ const HotelList = () => {
   const [loading, setLoading] = useState(false);
   const [hasMore, setHasMore] = useState(false);
 
+  const cityOptions = [
+    { label: '北京', value: '北京' },
+    { label: '上海', value: '上海' },
+    { label: '广州', value: '广州' },
+    { label: '深圳', value: '深圳' },
+    { label: '杭州', value: '杭州' },
+    { label: '成都', value: '成都' },
+    { label: '西安', value: '西安' },
+    { label: '南京', value: '南京' },
+    { label: '武汉', value: '武汉' },
+    { label: '重庆', value: '重庆' }
+  ];
+
   const sortOptions = [
     { label: '综合排序', value: '' },
     { label: '价格从低到高', value: 'price_asc' },
@@ -59,6 +72,12 @@ const HotelList = () => {
     updateSearchParams({ sortBy: value[0] || '' });
   };
 
+  const handleCityChange = (value) => {
+    if (value[0]) {
+      updateSearchParams({ city: value[0] });
+    }
+  };
+
   const getMinPrice = (rooms) => {
     if (!rooms || rooms.length === 0) return 0;
     return Math.min(...rooms.map(room => room.price));
@@ -79,8 +98,16 @@ const HotelList = () => {
 
       {/* 搜索头部 */}
       <div className="list-header">
+        <div className="city-selector">
+          <Selector
+            options={cityOptions}
+            value={[searchParams.city]}
+            onChange={handleCityChange}
+            columns={5}
+          />
+        </div>
+
         <div className="search-info">
-          <span className="city">{searchParams.city}</span>
           <span className="date">
             {dayjs(searchParams.checkIn).format('MM-DD')} 至 
             {dayjs(searchParams.checkOut).format('MM-DD')}
@@ -105,9 +132,9 @@ const HotelList = () => {
           <>
             {hotels.map(hotel => (
               <Card
-                key={hotel.id}
+                key={hotel._id}
                 className="hotel-card"
-                onClick={() => handleHotelClick(hotel.id)}
+                onClick={() => handleHotelClick(hotel._id)}
               >
                 <div className="hotel-card-content">
                   <div className="hotel-image">

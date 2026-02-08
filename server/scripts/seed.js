@@ -254,9 +254,13 @@ async function seedDatabase() {
     await Hotel.deleteMany({});
     console.log('✓ 数据已清空');
     
-    // 3. 创建用户
+    // 3. 创建用户（逐个创建以触发密码加密钩子）
     console.log('\n创建用户...');
-    const createdUsers = await User.insertMany(usersData);
+    const createdUsers = [];
+    for (const userData of usersData) {
+      const user = await User.createUser(userData);
+      createdUsers.push(user);
+    }
     console.log(`✓ 已创建 ${createdUsers.length} 个用户`);
     
     // 打印用户信息

@@ -105,7 +105,7 @@ const HotelManagement = () => {
       }
 
       if (editingHotel) {
-        await hotelAPI.updateHotel(editingHotel.id, payload);
+        await hotelAPI.updateHotel(editingHotel._id, payload);
         message.success('更新成功');
       } else {
         await hotelAPI.createHotel(payload);
@@ -131,16 +131,16 @@ const HotelManagement = () => {
   const handleReviewSubmit = async (action, reason = '') => {
     try {
       if (action === 'approve') {
-        await adminAPI.approveHotel(reviewHotel.id);
+        await adminAPI.approveHotel(reviewHotel._id);
         message.success('审核通过');
       } else if (action === 'reject') {
-        await adminAPI.rejectHotel(reviewHotel.id, reason);
+        await adminAPI.rejectHotel(reviewHotel._id, reason);
         message.success('已拒绝');
       } else if (action === 'publish') {
-        await adminAPI.publishHotel(reviewHotel.id);
+        await adminAPI.publishHotel(reviewHotel._id);
         message.success('已发布');
       } else if (action === 'unpublish') {
-        await adminAPI.unpublishHotel(reviewHotel.id);
+        await adminAPI.unpublishHotel(reviewHotel._id);
         message.success('已下线');
       }
       setReviewModalVisible(false);
@@ -182,7 +182,7 @@ const HotelManagement = () => {
           {user.role === 'merchant' && (
             <>
               <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>编辑</Button>
-              <Popconfirm title="确定删除？" onConfirm={() => handleDelete(record.id)}>
+              <Popconfirm title="确定删除？" onConfirm={() => handleDelete(record._id)}>
                 <Button type="link" danger icon={<DeleteOutlined />}>删除</Button>
               </Popconfirm>
             </>
@@ -221,7 +221,7 @@ const HotelManagement = () => {
       <Table
         columns={columns}
         dataSource={hotels}
-        rowKey="id"
+        rowKey="_id"
         loading={loading}
       />
 
@@ -241,6 +241,20 @@ const HotelManagement = () => {
           </Form.Item>
           <Form.Item name="address" label="地址" rules={[{ required: true }]}>
             <Input />
+          </Form.Item>
+          <Form.Item name="city" label="城市" rules={[{ required: true, message: '请选择城市' }]}>
+            <Select placeholder="请选择城市">
+              <Option value="北京">北京</Option>
+              <Option value="上海">上海</Option>
+              <Option value="广州">广州</Option>
+              <Option value="深圳">深圳</Option>
+              <Option value="杭州">杭州</Option>
+              <Option value="成都">成都</Option>
+              <Option value="西安">西安</Option>
+              <Option value="南京">南京</Option>
+              <Option value="武汉">武汉</Option>
+              <Option value="重庆">重庆</Option>
+            </Select>
           </Form.Item>
           <Form.Item name="starRating" label="星级" rules={[{ required: true }]}>
             <Select>
