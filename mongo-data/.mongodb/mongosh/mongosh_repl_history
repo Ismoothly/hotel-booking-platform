@@ -1,5 +1,0 @@
-  --eval "db.runCommand({connectionStatus:1})"
-  "mongodb://admin:admin123@host.docker.internal:27017/admin?authSource=admin" `
-docker run --rm -it mongo:latest mongosh `
-cp  .env.example .env
-cp .env.example .env\
