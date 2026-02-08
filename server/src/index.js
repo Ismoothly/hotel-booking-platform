@@ -73,11 +73,11 @@ async function startServer() {
     // 连接到 MongoDB
     await connectDB();
 
-    app.listen(PORT, () => {
+    app.listen(PORT, '0.0.0.0', () => {
       console.log('=================================');
       console.log(`Server is running on port ${PORT}`);
       console.log(`Environment: ${config.env}`);
-      console.log(`API URL: http://localhost:${PORT}`);
+      console.log(`API URL: http://0.0.0.0:${PORT}`);
       console.log('=================================');
     });
   } catch (err) {
