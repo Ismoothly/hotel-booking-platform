@@ -1,28 +1,66 @@
-const HotelModel = require('../models/Hotel');
+const Hotel = require('../models/Hotel-mongoose');
+const mongoose = require('mongoose');
 
 /**
  * 获取酒店列表
  */
 exports.getHotels = async (req, res) => {
   try {
-    const filters = {
-      city: req.query.city,
-      starRating: req.query.starRating,
-      minPrice: req.query.minPrice,
-      maxPrice: req.query.maxPrice,
-      keyword: req.query.keyword,
-      sortBy: req.query.sortBy,
-      status: 'published' // 只返回已发布的酒店
-    };
+    const {
+      city,
+      starRating,
+      minPrice,
+      maxPrice,
+      keyword,
+      page = 1,
+      limit = 10
+    } = req.query;
 
-    const hotels = await HotelModel.findAll(filters);
+    // sortBy 需要特殊处理，避免空字符串
+    const sortBy = req.query.sortBy && req.query.sortBy.trim() !== '' 
+      ? req.query.sortBy 
+      : '-createdAt';
+
+    // 构建查询条件
+    const query = { status: 'published' };
+
+    if (city) {
+      query.city = city;
+    }
+
+    if (starRating) {
+      query.starRating = parseInt(starRating);
+    }
+
+    // 关键字搜索（使用文本索引）
+    if (keyword) {
+      query.$text = { $search: keyword };
+    }
+
+    // 执行查询
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+    const hotels = await Hotel.find(query)
+      .sort(sortBy)
+      .skip(skip)
+      .limit(parseInt(limit))
+      .exec();
+
+    // 获取总数
+    const total = await Hotel.countDocuments(query);
 
     res.json({
       success: true,
       data: hotels,
-      total: hotels.length
+      total,
+      pagination: {
+        total,
+        page: parseInt(page),
+        limit: parseInt(limit),
+        pages: Math.ceil(total / parseInt(limit))
+      }
     });
   } catch (error) {
+    console.error('获取酒店列表失败:', error);
     res.status(500).json({
       success: false,
       message: error.message || '获取酒店列表失败'
@@ -35,7 +73,17 @@ exports.getHotels = async (req, res) => {
  */
 exports.getHotelById = async (req, res) => {
   try {
-    const hotel = await HotelModel.findById(req.params.id);
+    const { id } = req.params;
+
+    // 验证 ObjectId 格式
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: '酒店ID格式无效'
+      });
+    }
+
+    const hotel = await Hotel.findById(id).populate('merchantId', 'username email');
 
     if (!hotel) {
       return res.status(404).json({
@@ -49,6 +97,7 @@ exports.getHotelById = async (req, res) => {
       data: hotel
     });
   } catch (error) {
+    console.error('获取酒店详情失败:', error);
     res.status(500).json({
       success: false,
       message: error.message || '获取酒店详情失败'
@@ -61,28 +110,38 @@ exports.getHotelById = async (req, res) => {
  */
 exports.createHotel = async (req, res) => {
   try {
-    const hotelData = req.body;
+    const { nameCn, nameEn, address, city, starRating, openingDate, rooms, ...otherData } = req.body;
 
     // 验证必填字段
-    const requiredFields = ['nameCn', 'nameEn', 'address', 'starRating', 'openingDate', 'rooms'];
-    const missingFields = requiredFields.filter(field => !hotelData[field]);
-
-    if (missingFields.length > 0) {
+    if (!nameCn || !nameEn || !address || !city || !starRating || !openingDate || !rooms || !rooms.length) {
       return res.status(400).json({
         success: false,
-        message: `缺少必填字段: ${missingFields.join(', ')}`
+        message: '缺少必填字段'
       });
     }
 
     // 验证房型数据
-    if (!Array.isArray(hotelData.rooms) || hotelData.rooms.length === 0) {
+    if (!Array.isArray(rooms) || rooms.length === 0) {
       return res.status(400).json({
         success: false,
         message: '至少需要一个房型'
       });
     }
 
-    const hotel = await HotelModel.create(hotelData, req.user.id);
+    // 创建酒店文档
+    const hotel = new Hotel({
+      nameCn,
+      nameEn,
+      address,
+      city,
+      starRating: parseInt(starRating),
+      openingDate,
+      rooms,
+      merchantId: req.user.id,
+      ...otherData
+    });
+
+    await hotel.save();
 
     res.status(201).json({
       success: true,
@@ -90,6 +149,18 @@ exports.createHotel = async (req, res) => {
       data: hotel
     });
   } catch (error) {
+    console.error('创建酒店失败:', error);
+
+    // 处理 Mongoose 验证错误
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({
+        success: false,
+        message: '数据验证失败',
+        errors: messages
+      });
+    }
+
     res.status(400).json({
       success: false,
       message: error.message || '创建酒店失败'
@@ -102,7 +173,17 @@ exports.createHotel = async (req, res) => {
  */
 exports.updateHotel = async (req, res) => {
   try {
-    const hotel = await HotelModel.findById(req.params.id);
+    const { id } = req.params;
+
+    // 验证 ObjectId 格式
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: '酒店ID格式无效'
+      });
+    }
+
+    const hotel = await Hotel.findById(id);
 
     if (!hotel) {
       return res.status(404).json({
@@ -112,21 +193,35 @@ exports.updateHotel = async (req, res) => {
     }
 
     // 验证权限：只能更新自己的酒店
-    if (hotel.merchantId !== req.user.id && req.user.role !== 'admin') {
+    if (hotel.merchantId.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: '无权限更新此酒店'
       });
     }
 
-    const updatedHotel = await HotelModel.update(req.params.id, req.body);
+    // 更新字段
+    Object.assign(hotel, req.body);
+    await hotel.save();
 
     res.json({
       success: true,
       message: '酒店更新成功',
-      data: updatedHotel
+      data: hotel
     });
   } catch (error) {
+    console.error('更新酒店失败:', error);
+
+    // 处理 Mongoose 验证错误
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map(e => e.message);
+      return res.status(400).json({
+        success: false,
+        message: '数据验证失败',
+        errors: messages
+      });
+    }
+
     res.status(400).json({
       success: false,
       message: error.message || '更新酒店失败'
@@ -139,7 +234,17 @@ exports.updateHotel = async (req, res) => {
  */
 exports.deleteHotel = async (req, res) => {
   try {
-    const hotel = await HotelModel.findById(req.params.id);
+    const { id } = req.params;
+
+    // 验证 ObjectId 格式
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: '酒店ID格式无效'
+      });
+    }
+
+    const hotel = await Hotel.findById(id);
 
     if (!hotel) {
       return res.status(404).json({
@@ -149,20 +254,21 @@ exports.deleteHotel = async (req, res) => {
     }
 
     // 验证权限：只能删除自己的酒店
-    if (hotel.merchantId !== req.user.id && req.user.role !== 'admin') {
+    if (hotel.merchantId.toString() !== req.user.id && req.user.role !== 'admin') {
       return res.status(403).json({
         success: false,
         message: '无权限删除此酒店'
       });
     }
 
-    await HotelModel.delete(req.params.id);
+    await Hotel.findByIdAndDelete(id);
 
     res.json({
       success: true,
       message: '酒店删除成功'
     });
   } catch (error) {
+    console.error('删除酒店失败:', error);
     res.status(400).json({
       success: false,
       message: error.message || '删除酒店失败'
@@ -175,9 +281,9 @@ exports.deleteHotel = async (req, res) => {
  */
 exports.getMerchantHotels = async (req, res) => {
   try {
-    const hotels = await HotelModel.findAll({ 
+    const hotels = await Hotel.find({ 
       merchantId: req.user.id 
-    });
+    }).sort({ createdAt: -1 });
 
     res.json({
       success: true,
@@ -185,6 +291,7 @@ exports.getMerchantHotels = async (req, res) => {
       total: hotels.length
     });
   } catch (error) {
+    console.error('获取商户酒店列表失败:', error);
     res.status(500).json({
       success: false,
       message: error.message || '获取酒店列表失败'

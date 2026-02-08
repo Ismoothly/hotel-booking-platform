@@ -1,5 +1,5 @@
 const { verifyAccessToken } = require('../utils/jwt');
-const UserModel = require('../models/User');
+const User = require('../models/User-mongoose');
 
 /**
  * 验证用户是否已登录
@@ -22,7 +22,7 @@ exports.auth = async (req, res, next) => {
     const decoded = verifyAccessToken(token);
 
     // 获取用户信息
-    const user = await UserModel.findById(decoded.userId);
+    const user = await User.findById(decoded.userId);
     
     if (!user) {
       return res.status(401).json({
@@ -33,7 +33,7 @@ exports.auth = async (req, res, next) => {
 
     // 将用户信息附加到请求对象
     req.user = {
-      id: user.id,
+      id: user._id.toString(),
       username: user.username,
       role: user.role,
       email: user.email
@@ -41,6 +41,7 @@ exports.auth = async (req, res, next) => {
 
     next();
   } catch (error) {
+    console.error('认证失败:', error);
     return res.status(401).json({
       success: false,
       message: error.message || '认证失败'

@@ -20,6 +20,21 @@ const Home = () => {
   const [keyword, setKeyword] = useState('');
   const [datePickerVisible, setDatePickerVisible] = useState(false);
   const [selectedDate, setSelectedDate] = useState(null);
+  const [cityPickerVisible, setCityPickerVisible] = useState(false);
+
+  // 城市选项
+  const cityOptions = [
+    { label: '北京', value: '北京' },
+    { label: '上海', value: '上海' },
+    { label: '广州', value: '广州' },
+    { label: '深圳', value: '深圳' },
+    { label: '杭州', value: '杭州' },
+    { label: '成都', value: '成都' },
+    { label: '西安', value: '西安' },
+    { label: '南京', value: '南京' },
+    { label: '武汉', value: '武汉' },
+    { label: '重庆', value: '重庆' }
+  ];
 
   // Banner数据
   const banners = [
@@ -61,6 +76,12 @@ const Home = () => {
     '景区周边',
     '游泳池'
   ];
+
+  const handleCityChange = (value) => {
+    if (value[0]) {
+      updateSearchParams({ city: value[0] });
+    }
+  };
 
   const handleSearch = () => {
     updateSearchParams({
@@ -137,10 +158,12 @@ const Home = () => {
           {/* 城市选择 */}
           <div className="search-item">
             <div className="search-label">目的地</div>
-            <div className="search-value">
-              <span className="location-icon">📍</span>
-              {searchParams.city}
-            </div>
+            <Selector
+              options={cityOptions}
+              value={[searchParams.city]}
+              onChange={handleCityChange}
+              columns={5}
+            />
           </div>
 
           {/* 日期选择 */}

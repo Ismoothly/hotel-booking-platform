@@ -1,4 +1,4 @@
-const UserModel = require('../models/User');
+const User = require('../models/User-mongoose');
 const { generateAccessToken, generateRefreshToken, verifyRefreshToken } = require('../utils/jwt');
 const config = require('../config');
 
@@ -37,15 +37,15 @@ exports.register = async (req, res) => {
     }
 
     // 验证角色
-    if (role && !['merchant', 'admin'].includes(role)) {
+    if (role && !['merchant', 'admin', 'customer'].includes(role)) {
       return res.status(400).json({
         success: false,
-        message: '角色只能是merchant或admin'
+        message: '角色只能是merchant、admin或customer'
       });
     }
 
     // 创建用户
-    const user = await UserModel.create({
+    const user = await User.createUser({
       username,
       password,
       email,
@@ -53,9 +53,9 @@ exports.register = async (req, res) => {
     });
 
     // 生成 access/refresh token
-    const accessToken = generateAccessToken({ userId: user.id });
-    const refreshToken = generateRefreshToken({ userId: user.id });
-    await UserModel.addRefreshToken(user.id, refreshToken);
+    const accessToken = generateAccessToken({ userId: user._id.toString() });
+    const refreshToken = generateRefreshToken({ userId: user._id.toString() });
+    await user.addRefreshToken(refreshToken);
     setRefreshTokenCookie(res, refreshToken);
 
     res.status(201).json({
@@ -63,7 +63,7 @@ exports.register = async (req, res) => {
       message: '注册成功',
       data: {
         user: {
-          id: user.id,
+          id: user._id.toString(),
           username: user.username,
           role: user.role,
           email: user.email
@@ -72,6 +72,7 @@ exports.register = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('注册失败:', error);
     res.status(400).json({
       success: false,
       message: error.message || '注册失败'
@@ -94,8 +95,8 @@ exports.login = async (req, res) => {
       });
     }
 
-    // 查找用户
-    const user = await UserModel.findByUsername(username);
+    // 查找用户（包含密码字段）
+    const user = await User.findByUsername(username).select('+password');
     
     if (!user) {
       return res.status(401).json({
@@ -105,7 +106,7 @@ exports.login = async (req, res) => {
     }
 
     // 验证密码
-    const isPasswordValid = await UserModel.comparePassword(password, user.password);
+    const isPasswordValid = await user.comparePassword(password);
     
     if (!isPasswordValid) {
       return res.status(401).json({
@@ -115,9 +116,9 @@ exports.login = async (req, res) => {
     }
 
     // 生成 access/refresh token
-    const accessToken = generateAccessToken({ userId: user.id });
-    const refreshToken = generateRefreshToken({ userId: user.id });
-    await UserModel.addRefreshToken(user.id, refreshToken);
+    const accessToken = generateAccessToken({ userId: user._id.toString() });
+    const refreshToken = generateRefreshToken({ userId: user._id.toString() });
+    await user.addRefreshToken(refreshToken);
     setRefreshTokenCookie(res, refreshToken);
 
     res.json({
@@ -125,7 +126,7 @@ exports.login = async (req, res) => {
       message: '登录成功',
       data: {
         user: {
-          id: user.id,
+          id: user._id.toString(),
           username: user.username,
           role: user.role,
           email: user.email
@@ -134,6 +135,7 @@ exports.login = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('登录失败:', error);
     res.status(500).json({
       success: false,
       message: error.message || '登录失败'
@@ -146,7 +148,7 @@ exports.login = async (req, res) => {
  */
 exports.getCurrentUser = async (req, res) => {
   try {
-    const user = await UserModel.findById(req.user.id);
+    const user = await User.findById(req.user.id);
     
     if (!user) {
       return res.status(404).json({
@@ -158,13 +160,14 @@ exports.getCurrentUser = async (req, res) => {
     res.json({
       success: true,
       data: {
-        id: user.id,
+        id: user._id.toString(),
         username: user.username,
         role: user.role,
         email: user.email
       }
     });
   } catch (error) {
+    console.error('获取用户信息失败:', error);
     res.status(500).json({
       success: false,
       message: error.message || '获取用户信息失败'
@@ -186,7 +189,7 @@ exports.refresh = async (req, res) => {
     }
 
     const decoded = verifyRefreshToken(refreshToken);
-    const user = await UserModel.findById(decoded.userId);
+    const user = await User.findById(decoded.userId).select('+refreshTokens');
 
     if (!user) {
       return res.status(401).json({
@@ -195,8 +198,8 @@ exports.refresh = async (req, res) => {
       });
     }
 
-    const tokenOwner = await UserModel.findByRefreshToken(refreshToken);
-    if (!tokenOwner || tokenOwner.id !== user.id) {
+    // 验证 token 是否存在于用户的 refreshTokens 数组中
+    if (!user.refreshTokens || !user.refreshTokens.includes(refreshToken)) {
       return res.status(401).json({
         success: false,
         message: '刷新令牌无效'
@@ -204,11 +207,11 @@ exports.refresh = async (req, res) => {
     }
 
     // 旋转 refresh token
-    const newRefreshToken = generateRefreshToken({ userId: user.id });
-    await UserModel.replaceRefreshToken(user.id, refreshToken, newRefreshToken);
+    const newRefreshToken = generateRefreshToken({ userId: user._id.toString() });
+    await user.replaceRefreshToken(refreshToken, newRefreshToken);
     setRefreshTokenCookie(res, newRefreshToken);
 
-    const newAccessToken = generateAccessToken({ userId: user.id });
+    const newAccessToken = generateAccessToken({ userId: user._id.toString() });
 
     res.json({
       success: true,
@@ -217,6 +220,7 @@ exports.refresh = async (req, res) => {
       }
     });
   } catch (error) {
+    console.error('刷新失败:', error);
     clearRefreshTokenCookie(res);
     return res.status(401).json({
       success: false,
@@ -232,9 +236,15 @@ exports.logout = async (req, res) => {
   try {
     const refreshToken = req.cookies?.refresh_token;
     if (refreshToken) {
-      const tokenOwner = await UserModel.findByRefreshToken(refreshToken);
-      if (tokenOwner) {
-        await UserModel.removeRefreshToken(tokenOwner.id, refreshToken);
+      try {
+        const decoded = verifyRefreshToken(refreshToken);
+        const user = await User.findById(decoded.userId).select('+refreshTokens');
+        if (user && user.refreshTokens && user.refreshTokens.includes(refreshToken)) {
+          await user.removeRefreshToken(refreshToken);
+        }
+      } catch (err) {
+        // Token 无效或过期，忽略
+        console.error('退出时处理 token 错误:', err.message);
       }
     }
 
@@ -245,6 +255,7 @@ exports.logout = async (req, res) => {
       message: '已退出登录'
     });
   } catch (error) {
+    console.error('退出失败:', error);
     clearRefreshTokenCookie(res);
     res.status(500).json({
       success: false,
