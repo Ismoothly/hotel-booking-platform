@@ -155,11 +155,18 @@ export default function Cart() {
       <div className="cart-empty">
         <div style={{ fontSize: 48, marginBottom: 16 }}>🛒</div>
         <p style={{ fontSize: 16, color: '#999', marginBottom: 24 }}>购物车为空</p>
-        <Link to="/">
-          <Button color="primary" size="large" fill block>
-            继续购物
-          </Button>
-        </Link>
+        <Space direction="vertical" style={{ width: '100%' }} block>
+          <Link to="/" style={{ width: '100%', display: 'block' }}>
+            <Button color="primary" size="large" fill block>
+              继续购物
+            </Button>
+          </Link>
+          <Link to="/orders" style={{ width: '100%', display: 'block' }}>
+            <Button color="default" size="large" fill block>
+              📋 查看我的订单
+            </Button>
+          </Link>
+        </Space>
       </div>
     );
   }
@@ -168,14 +175,26 @@ export default function Cart() {
     <div className="cart-container">
       <div className="cart-header">
         <div style={{ fontSize: 16, fontWeight: 'bold' }}>购物车</div>
-        <Button
-          fill
-          size="small"
-          color="danger"
-          onClick={handleClearCart}
-        >
-          清空
-        </Button>
+        <Space>
+          <Link to="/orders" style={{ textDecoration: 'none' }}>
+            <Button
+              fill
+              size="small"
+              color="default"
+              onClick={() => console.log('打开订单页面')}
+            >
+              📋 订单
+            </Button>
+          </Link>
+          <Button
+            fill
+            size="small"
+            color="danger"
+            onClick={handleClearCart}
+          >
+            清空
+          </Button>
+        </Space>
       </div>
 
       <div className="cart-items">
