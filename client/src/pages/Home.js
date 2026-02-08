@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import {
   SearchBar,
   Swiper,
-  Grid,
   Button,
   DatePicker,
   Selector,
@@ -327,6 +326,27 @@ const Home = () => {
 
   return (
     <div className="home-page">
+      {/* 快速导航栏 */}
+      <div style={{
+        backgroundColor: '#fff',
+        padding: '12px',
+        display: 'flex',
+        justifyContent: 'flex-end',
+        gap: '8px',
+        borderBottom: '1px solid #eee'
+      }}>
+        <Link to="/cart" style={{ textDecoration: 'none' }}>
+          <Button size="small" color="default" fill>
+            🛒 购物车
+          </Button>
+        </Link>
+        <Link to="/orders" style={{ textDecoration: 'none' }}>
+          <Button size="small" color="primary" fill>
+            📋 我的订单
+          </Button>
+        </Link>
+      </div>
+
       {/* Banner */}
       <div className="banner-section">
         <Swiper

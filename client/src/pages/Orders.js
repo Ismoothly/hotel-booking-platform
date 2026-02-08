@@ -152,13 +152,17 @@ export default function Orders() {
   return (
     <div className="orders-container">
       <div className="orders-header">
-        <Link to="/">
-          <Button fill size="small" color="primary">
-            ← 返回
+        <Link to="/cart" style={{ textDecoration: 'none' }}>
+          <Button fill size="small" color="default">
+            🛒 购物车
           </Button>
         </Link>
         <div style={{ fontSize: 16, fontWeight: 'bold' }}>我的订单</div>
-        <div style={{ width: 60 }} />
+        <Link to="/" style={{ textDecoration: 'none' }}>
+          <Button fill size="small" color="primary">
+            首页
+          </Button>
+        </Link>
       </div>
 
       <div className="orders-filter">
