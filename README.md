@@ -102,20 +102,20 @@ hotel-booking-platform/
 # 1. 启动 MongoDB (Docker)
 docker run -d -p 27017:27017 --name mongodb mongo:latest
 # #如果失败，重建容器：
-# docker rm -f mongodb
-# docker run -d -p 27017:27017 --name mongodb `
-#   -e MONGO_INITDB_ROOT_USERNAME=admin `
-#   -e MONGO_INITDB_ROOT_PASSWORD=admin123 `
-#   mongo:latest
-#   然后再测：
-#   docker run --rm -it mongo:latest mongosh `
-#   "mongodb://admin:admin123@host.docker.internal:27017/admin?authSource=admin" `
-#   --eval "db.runCommand({connectionStatus:1})"
-# 直接连容器网络
-# docker run --rm -it --network container:mongodb mongo:latest mongosh `
-#   "mongodb://admin:admin123@localhost:27017/admin?authSource=admin" `
-#   --eval "db.runCommand({connectionStatus:1})"
-# mongDB CONNECT STRING :mongodb://admin:admin123@localhost:27017/admin
+docker rm -f mongodb
+docker run -d -p 27017:27017 --name mongodb `
+  -e MONGO_INITDB_ROOT_USERNAME=admin `
+  -e MONGO_INITDB_ROOT_PASSWORD=admin123 `
+  mongo:latest
+  然后再测：
+  docker run --rm -it mongo:latest mongosh `
+  "mongodb://admin:admin123@host.docker.internal:27017/admin?authSource=admin" `
+  --eval "db.runCommand({connectionStatus:1})"
+直接连容器网络
+docker run --rm -it --network container:mongodb mongo:latest mongosh `
+  "mongodb://admin:admin123@localhost:27017/admin?authSource=admin" `
+  --eval "db.runCommand({connectionStatus:1})"
+mongDB CONNECT STRING :mongodb://admin:admin123@localhost:27017/admin
 # 2. 配置环境变量
 cd server
 cp .env.example .env
