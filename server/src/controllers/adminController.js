@@ -239,11 +239,16 @@ exports.unpublishHotel = async (req, res) => {
     }
 
     hotel.status = 'unpublished';
+    // 下线后需重新审核方可再次上线
+    hotel.reviewStatus = 'pending';
+    hotel.reviewMessage = '';
+    hotel.reviewedAt = null;
+    hotel.reviewerId = null;
     await hotel.save();
 
     res.json({
       success: true,
-      message: '酒店已下线',
+      message: '酒店已下线，再次上线需重新审核',
       data: hotel
     });
   } catch (error) {

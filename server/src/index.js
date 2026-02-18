@@ -6,11 +6,13 @@ const config = require('./config');
 const { connectDB } = require('./config/database');
 
 // 导入路由
+const path = require('path');
 const authRoutes = require('./routes/auth');
 const hotelRoutes = require('./routes/hotels');
 const adminRoutes = require('./routes/admin');
 const cartRoutes = require('./routes/cart');
 const orderRoutes = require('./routes/orders');
+const uploadRoutes = require('./routes/upload');
 
 const app = express();
 
@@ -23,6 +25,7 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // 请求日志
 app.use((req, res, next) => {
@@ -45,6 +48,7 @@ app.use('/api/hotels', hotelRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/cart', cartRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/upload', uploadRoutes);
 
 // 404处理
 app.use((req, res) => {
