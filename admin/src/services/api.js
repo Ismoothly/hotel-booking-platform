@@ -85,6 +85,24 @@ export const hotelAPI = {
   deleteHotel: (id) => api.delete(`/hotels/${id}`)
 };
 
+// 上传API（需登录）
+const uploadApiClient = axios.create({
+  baseURL: 'http://localhost:5000/api',
+  timeout: 30000,
+  withCredentials: true,
+  headers: { 'Content-Type': 'multipart/form-data' }
+});
+uploadApiClient.interceptors.request.use((config) => {
+  const token = localStorage.getItem('admin_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
+uploadApiClient.interceptors.response.use((res) => res.data, (err) => Promise.reject(err.response?.data || err));
+
+export const uploadAPI = {
+  uploadImage: (formData) => uploadApiClient.post('/upload/image', formData)
+};
+
 // 管理员API
 export const adminAPI = {
   getAllHotels: (params) => api.get('/admin/hotels', { params }),
