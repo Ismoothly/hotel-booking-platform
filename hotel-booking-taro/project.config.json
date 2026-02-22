@@ -4,12 +4,14 @@
   "description": "易宿酒店预订平台",
   "appid": "touristappid",
   "setting": {
-    "urlCheck": true,
+    "urlCheck": false,
     "es6": false,
     "enhance": false,
     "compileHotReLoad": false,
     "postcss": false,
-    "minified": false
+    "minified": false,
+    "ignoreDevUnusedFiles": false,
+    "ignoreUploadUnusedFiles": false
   },
   "compileType": "miniprogram",
   "permission": {

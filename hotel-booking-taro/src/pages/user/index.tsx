@@ -101,6 +101,12 @@ export default function User() {
           </View>
         )}
 
+        <View className='menu-item' onClick={() => Taro.navigateTo({ url: '/pages/settings/index' })}>
+          <Text className='icon'>⚙️</Text>
+          <Text className='title'>API 配置</Text>
+          <Text className='arrow'>›</Text>
+        </View>
+
         <View className='menu-item' onClick={() => Taro.navigateTo({ url: '/pages/help/index' })}>
           <Text className='icon'>❓</Text>
           <Text className='title'>帮助与反馈</Text>

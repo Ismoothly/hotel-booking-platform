@@ -18,7 +18,20 @@ const app = express();
 
 // 中间件
 app.use(cors({
-  origin: config.corsOrigins,
+  origin: (origin, callback) => {
+    // 开发环境允许所有来源（真机调试）
+    if (config.env === 'development') {
+      callback(null, true);
+    } else {
+      // 生产环境检查白名单
+      const allowedOrigins = Array.isArray(config.corsOrigins) ? config.corsOrigins : [config.corsOrigins];
+      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    }
+  },
   credentials: true
 }));
 

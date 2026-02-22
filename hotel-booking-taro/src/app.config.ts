@@ -7,7 +7,8 @@ export default defineAppConfig({
     'pages/cart/index',
     'pages/checkout/index',
     'pages/orders/index',
-    'pages/user/index'
+    'pages/user/index',
+    'pages/settings/index'
   ],
   tabBar: {
     color: '#999',
