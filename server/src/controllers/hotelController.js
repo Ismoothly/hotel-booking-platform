@@ -25,7 +25,8 @@ exports.getHotels = async (req, res) => {
     const query = { status: 'published' };
 
     if (city) {
-      query.city = city;
+      // 支持模糊匹配：天津可以匹配"天津"或"天津市"
+      query.city = new RegExp(`^${city}`, 'i');
     }
 
     if (starRating) {
