@@ -69,16 +69,41 @@ const request = async (config: RequestConfig) => {
     console.error('🔴 API 请求失败:', {
       url: config.url,
       baseURL: API_BASE_URL,
+      fullURL: `${API_BASE_URL}${config.url}`,
       method: config.method,
       error: error.message,
       errMsg: error.errMsg
     })
     
-    const errorMsg = error.message || error.errMsg || '网络请求失败'
-    Taro.showToast({
-      title: errorMsg,
-      icon: 'none'
-    })
+    // 判断是否为网络连接错误
+    const isNetworkError = error.errMsg?.includes('timeout') || 
+                          error.errMsg?.includes('fail') ||
+                          error.errMsg?.includes('连接') ||
+                          !error.statusCode
+
+    if (isNetworkError) {
+      // 真机调试时的网络错误，提供更友好的提示
+      Taro.showModal({
+        title: '网络连接失败',
+        content: '无法连接到服务器。\n\n真机调试时请前往【我的】→【API 配置】设置后端地址为电脑的局域网 IP。',
+        confirmText: '去配置',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            Taro.navigateTo({ url: '/pages/settings/index' })
+          }
+        }
+      })
+    } else {
+      // 其他错误显示简短提示
+      const errorMsg = error.message || error.errMsg || '请求失败'
+      Taro.showToast({
+        title: errorMsg,
+        icon: 'none',
+        duration: 2000
+      })
+    }
+    
     return Promise.reject(error)
   }
 }
