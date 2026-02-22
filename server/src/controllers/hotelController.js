@@ -202,12 +202,13 @@ exports.updateHotel = async (req, res) => {
 
     // 更新字段
     Object.assign(hotel, req.body);
-    // 商家更新信息后需重新审核；管理员更新不改变审核状态
+    // 商家更新信息后需重新审核，发布状态改为草稿；管理员更新不改变审核与发布状态
     if (req.user.role === 'merchant') {
       hotel.reviewStatus = 'pending';
       hotel.reviewMessage = '';
       hotel.reviewedAt = null;
       hotel.reviewerId = null;
+      hotel.status = 'draft';
     }
     await hotel.save();
 
