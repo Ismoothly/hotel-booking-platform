@@ -158,7 +158,7 @@ export default function Cart() {
           </View>
           <View
             className='orders-btn'
-            onClick={() => Taro.navigateTo({ url: '/pages/orders/index' })}
+            onClick={() => Taro.switchTab({ url: '/pages/orders/index' })}
           >
             📋 查看我的订单
           </View>
