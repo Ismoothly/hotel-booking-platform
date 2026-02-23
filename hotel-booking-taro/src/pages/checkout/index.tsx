@@ -1,4 +1,4 @@
-import { View, Text, Input, Textarea, Button } from '@tarojs/components'
+import { View, Text, Input, Textarea } from '@tarojs/components'
 import { useState } from 'react'
 import Taro, { useLoad } from '@tarojs/taro'
 import { orderAPI } from '../../services/api'
@@ -66,15 +66,21 @@ export default function Checkout() {
       })
 
       if (response.code === 200) {
-        await Taro.showModal({
+        Taro.showToast({
           title: '订单创建成功',
-          content: `订单号: ${response.data.orderId}`,
-          showCancel: false
+          icon: 'success'
         })
 
-        // 跳转到订单页面
-        Taro.redirectTo({
-          url: '/pages/orders/index'
+        // 延迟跳转，让用户看到成功提示
+        setTimeout(() => {
+          Taro.switchTab({
+            url: '/pages/orders/index'
+          })
+        }, 1500)
+      } else {
+        Taro.showToast({
+          title: response.message || '创建订单失败',
+          icon: 'none'
         })
       }
     } catch (error: any) {
@@ -144,13 +150,12 @@ export default function Checkout() {
       </View>
 
       <View className='submit-footer'>
-        <Button
+        <View
           className={`submit-btn ${loading ? 'disabled' : ''}`}
           onClick={handleSubmit}
-          disabled={loading}
         >
           {loading ? '提交中...' : '确认并提交订单'}
-        </Button>
+        </View>
       </View>
     </View>
   )

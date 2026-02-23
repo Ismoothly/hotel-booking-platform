@@ -12,6 +12,7 @@ exports.getHotels = async (req, res) => {
       minPrice,
       maxPrice,
       keyword,
+      facilities,
       page = 1,
       limit = 10
     } = req.query;
@@ -36,6 +37,11 @@ exports.getHotels = async (req, res) => {
     // 关键字搜索（使用文本索引）
     if (keyword) {
       query.$text = { $search: keyword };
+    }
+
+    // 设施筛选
+    if (facilities) {
+      query.facilities = { $in: [facilities] };
     }
 
     // 执行查询

@@ -171,6 +171,43 @@ npm run build:h5        # 编译 H5（生产模式）
 - **支付宝小程序**：用支付宝开发者工具打开 `hotel-booking-taro/dist/alipay`
 - **H5**：访问本地服务 `http://localhost:10086`
 
+### 📱 小程序真机调试
+
+**快速启动（推荐）**：
+```bash
+# 运行真机调试配置助手（会自动获取 IP 并指导配置）
+.\start-miniprogram-debug.ps1
+```
+
+**手动配置**：
+1. 获取电脑局域网 IP：
+   ```bash
+   # Windows
+   ipconfig
+   
+   # Mac/Linux
+   ifconfig
+   ```
+
+2. 确保后端服务已启动：
+   ```bash
+   cd server
+   npm run dev
+   ```
+
+3. 在小程序中配置 API 地址：
+   - 打开小程序，进入【我的】→【⚙️ API 配置】
+   - 输入：`http://你的IP:5000/api`（例如：`http://192.168.1.100:5000/api`）
+   - 点击【测试连接】→【保存配置】
+   - 重启小程序
+
+4. 确保手机和电脑在同一 WiFi 网络
+
+**常见问题**：
+- ❌ 登录失败、酒店列表加载失败 → 检查 API 地址配置
+- ❌ 连接超时 → 检查防火墙设置和网络连接
+- ✅ 详细说明请查看：[真机调试指南](./MINIPROGRAM_DEBUG_GUIDE.md)
+
 ### 构建生产版本
 
 ```bash

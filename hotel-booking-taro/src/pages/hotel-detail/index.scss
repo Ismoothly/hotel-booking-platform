@@ -1,7 +1,7 @@
 .hotel-detail {
-  background: #f5f5f5;
+  background: var(--bg-gray);
   min-height: 100vh;
-  padding-bottom: 60px;
+  padding-bottom: 80px;
 
   &.loading,
   &.empty {
@@ -13,8 +13,8 @@
 
   .banner {
     width: 100%;
-    height: 300px;
-    margin-bottom: 20px;
+    height: 350px;
+    margin-bottom: 24px;
 
     .banner-image {
       width: 100%;
@@ -24,47 +24,49 @@
 
   .hotel-info {
     background: white;
-    padding: 20px;
-    margin-bottom: 10px;
+    padding: 22px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
 
     .hotel-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 10px;
+      margin-bottom: 16px;
 
       .hotel-name {
-        font-size: 20px;
+        font-size: 30px;
         font-weight: bold;
-        color: #333;
+        color: var(--text-1);
       }
 
       .hotel-en-name {
-        font-size: 12px;
-        color: #999;
-        margin-top: 5px;
+        font-size: 18px;
+        color: var(--text-3);
+        margin-top: 10px;
       }
 
       .star-rating {
-        font-size: 20px;
+        font-size: 30px;
       }
     }
 
     .hotel-address {
-      font-size: 14px;
-      color: #666;
-      margin: 10px 0;
-      line-height: 1.5;
+      font-size: 20px;
+      color: var(--text-2);
+      margin: 18px 0;
+      line-height: 1.6;
     }
 
     .info-item {
       display: flex;
-      margin: 10px 0;
-      font-size: 14px;
+      margin: 16px 0;
+      font-size: 20px;
 
       .label {
         color: #999;
-        margin-right: 10px;
+        margin-right: 14px;
       }
 
       .value {
@@ -76,29 +78,31 @@
 
   .section {
     background: white;
-    padding: 20px;
-    margin-bottom: 10px;
+    padding: 22px;
+    margin-bottom: 16px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
 
     .section-title {
-      font-size: 16px;
+      font-size: 23px;
       font-weight: bold;
-      color: #333;
-      margin-bottom: 15px;
-      border-left: 3px solid #ff6b6b;
-      padding-left: 10px;
+      color: var(--text-1);
+      margin-bottom: 20px;
+      border-left: 4px solid var(--primary-color);
+      padding-left: 14px;
     }
 
     .facilities-grid {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
+      gap: 12px;
 
       .facility-tag {
         background: #f0f0f0;
-        padding: 8px 12px;
-        border-radius: 20px;
-        font-size: 12px;
-        color: #666;
+        padding: 12px 18px;
+        border-radius: 24px;
+        font-size: 18px;
+        color: var(--text-2);
       }
     }
 
@@ -106,15 +110,15 @@
     .shopping-list {
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 12px;
 
       .attraction-item,
       .shop-item {
-        padding: 10px;
+        padding: 16px;
         background: #f9f9f9;
-        border-radius: 8px;
-        font-size: 14px;
-        color: #333;
+        border-radius: 12px;
+        font-size: 20px;
+        color: var(--text-1);
       }
     }
   }
@@ -123,37 +127,41 @@
     .rooms-list {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 16px;
 
       .room-card {
-        border: 2px solid #e0e0e0;
-        border-radius: 8px;
-        padding: 15px;
+        border: 2px solid var(--border-color);
+        border-radius: 12px;
+        padding: 18px;
         background: white;
         transition: all 0.3s;
+        &:active {
+          opacity: 0.98;
+          transform: scale(0.995);
+        }
 
         &.selected {
-          border-color: #ff6b6b;
-          background: #fff5f5;
+          border-color: var(--primary-color);
+          background: rgba(23, 101, 255, 0.06);
         }
 
         .room-type {
-          font-size: 16px;
+          font-size: 23px;
           font-weight: bold;
-          color: #333;
-          margin-bottom: 5px;
+          color: var(--text-1);
+          margin-bottom: 10px;
         }
 
         .room-description {
-          font-size: 12px;
-          color: #999;
-          margin-bottom: 8px;
+          font-size: 18px;
+          color: var(--text-3);
+          margin-bottom: 12px;
         }
 
         .room-price {
-          font-size: 18px;
+          font-size: 28px;
           font-weight: bold;
-          color: #ff6b6b;
+          color: var(--accent-color);
         }
       }
     }
@@ -161,47 +169,50 @@
 
   .date-section {
     background: white;
-    padding: 20px;
-    margin-bottom: 60px;
+    padding: 22px;
+    margin-bottom: 80px;
+    border-radius: 16px;
+    box-shadow: var(--shadow-soft);
 
     .date-picker-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      margin-top: 15px;
+      margin-top: 20px;
 
       .date-picker {
         flex: 1;
-        padding: 12px;
-        background: #f5f5f5;
-        border-radius: 8px;
+        padding: 18px;
+        background: #fff;
+        border-radius: 12px;
         display: flex;
         flex-direction: column;
 
         .date-label {
-          font-size: 12px;
-          color: #999;
-          margin-bottom: 5px;
+          font-size: 18px;
+          color: var(--text-3);
+          margin-bottom: 10px;
         }
 
         .date-value {
-          font-size: 16px;
+          font-size: 23px;
           font-weight: bold;
-          color: #333;
+          color: var(--text-1);
         }
       }
 
       .date-separator {
-        margin: 0 10px;
-        color: #999;
+        margin: 0 14px;
+        color: var(--text-3);
+        font-size: 20px;
       }
     }
 
     .nights-info {
-      margin-top: 15px;
+      margin-top: 20px;
       text-align: center;
-      font-size: 14px;
-      color: #667eea;
+      font-size: 20px;
+      color: var(--primary-color);
       font-weight: bold;
     }
   }
@@ -212,38 +223,39 @@
     left: 0;
     right: 0;
     background: white;
-    padding: 15px;
-    border-top: 1px solid #e0e0e0;
+    padding: 20px 22px;
+    border-top: 1px solid var(--border-color);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 
     .price-info {
       flex: 1;
 
       .price-label {
-        font-size: 14px;
-        color: #999;
-        margin-right: 5px;
+        font-size: 19px;
+        color: var(--text-3);
+        margin-right: 10px;
       }
 
       .price-amount {
-        font-size: 24px;
+        font-size: 34px;
         font-weight: bold;
-        color: #ff4d4f;
+        color: var(--accent-color);
       }
     }
 
     .cart-btn {
-      width: 180px;
-      height: 48px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      width: 210px;
+      height: 60px;
+      background: var(--primary-color);
       color: white;
-      font-size: 16px;
+      font-size: 21px;
       font-weight: bold;
-      border-radius: 24px;
+      border-radius: 30px;
       border: none;
+      box-shadow: 0 4px 10px rgba(23, 101, 255, 0.3);
 
       &:active {
         opacity: 0.8;
