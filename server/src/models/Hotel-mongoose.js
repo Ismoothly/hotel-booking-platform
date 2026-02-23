@@ -227,7 +227,8 @@ hotelSchema.index({
   nameCn: 'text',
   nameEn: 'text',
   address: 'text',
-  description: 'text'
+  description: 'text',
+  facilities: 'text'
 });
 
 /**

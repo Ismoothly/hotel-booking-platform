@@ -63,12 +63,15 @@ const BANNERS = [
 ];
 
 const QUICK_TAGS = [
+  "免费WiFi",
   "亲子酒店",
   "豪华酒店",
   "免费停车",
   "商务酒店",
   "景区周边",
   "游泳池",
+  "健身房",
+  "餐厅",
 ];
 
 const ICONS = {
@@ -114,10 +117,16 @@ export default function Index() {
     setLoading(true);
     try {
       const params: any = {
-        keyword: searchValue,
         city: selectedCity,
         ...filters,
       };
+
+      // 如果没有指定facilities参数，才使用keyword搜索
+      if (filters.keyword !== undefined) {
+        params.keyword = filters.keyword;
+      } else if (!filters.facilities && searchValue) {
+        params.keyword = searchValue;
+      }
 
       // 添加星级筛选
       if (selectedStar > 0) {
@@ -163,11 +172,13 @@ export default function Index() {
 
   const handleTagClick = (tag: string) => {
     if (searchValue === tag) {
+      // 取消选中
       setSearchValue("");
-      fetchHotels({ keyword: "" });
+      fetchHotels({});
     } else {
+      // 选中该标签
       setSearchValue(tag);
-      fetchHotels({ keyword: tag });
+      fetchHotels({ facilities: tag });
     }
   };
 
