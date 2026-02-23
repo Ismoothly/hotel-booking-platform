@@ -8,7 +8,9 @@ export default defineAppConfig({
     'pages/checkout/index',
     'pages/orders/index',
     'pages/user/index',
-    'pages/settings/index'
+    'pages/settings/index',
+    'pages/my-hotels/index',
+    'pages/help/index'
   ],
   tabBar: {
     color: '#999',

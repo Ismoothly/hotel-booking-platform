@@ -1,0 +1,52 @@
+.help-page {
+  min-height: 100vh;
+  background-color: var(--bg-gray);
+  padding: 20px;
+
+  .help-section {
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 20px;
+
+    .help-item {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .icon {
+        font-size: 32px;
+        display: block;
+        margin-bottom: 10px;
+      }
+
+      .title {
+        display: block;
+        font-size: 18px;
+        font-weight: bold;
+        color: var(--text-1);
+        margin-bottom: 8px;
+      }
+
+      .desc {
+        display: block;
+        font-size: 16px;
+        color: var(--text-2);
+      }
+    }
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 40px 20px;
+
+    .empty-text {
+      font-size: 16px;
+      color: var(--text-3);
+    }
+  }
+}

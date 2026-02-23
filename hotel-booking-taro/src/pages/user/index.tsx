@@ -87,9 +87,9 @@ export default function User() {
       </View>
 
       <View className='menu-section'>
-        <View className='menu-item' onClick={() => Taro.navigateTo({ url: '/pages/my-bookings/index' })}>
+        <View className='menu-item' onClick={() => Taro.switchTab({ url: '/pages/orders/index' })}>
           <Text className='icon'>📅</Text>
-          <Text className='title'>我的预订</Text>
+          <Text className='title'>我的订单</Text>
           <Text className='arrow'>›</Text>
         </View>
 
