@@ -350,7 +350,7 @@ export default function Index() {
 
       {/* 筛选区域 */}
       <View className="bg-white p-3 m-3 -mt-6 rounded-xl shadow-lgsoft relative z-10">
-        <View className="flex items-center mb-3">
+        <View className="flex items-center justify-between mb-3">
           <Picker
             mode="selector"
             range={CITIES}
@@ -363,6 +363,15 @@ export default function Index() {
               <Image src={ICONS.chevronDown} className="w-3 h-3 ml-1" />
             </View>
           </Picker>
+          <View 
+            className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg active:opacity-80"
+            onClick={handleGetLocation}
+          >
+            <Image 
+              src="https://img.icons8.com/ios-filled/50/FFFFFF/worldwide-location.png" 
+              className="w-5 h-5" 
+            />
+          </View>
         </View>
 
         <View className="mb-2 h-8 relative flex items-center">
