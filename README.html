@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>README.md</title>
+<meta http-equiv="Content-type" content="text/html;charset=UTF-8">
+
+<style>
+/* https://github.com/microsoft/vscode/blob/master/extensions/markdown-language-features/media/markdown.css */
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+body {
+	font-family: var(--vscode-markdown-font-family, -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif);
+	font-size: var(--vscode-markdown-font-size, 14px);
+	padding: 0 26px;
+	line-height: var(--vscode-markdown-line-height, 22px);
+	word-wrap: break-word;
+}
+
+#code-csp-warning {
+	position: fixed;
+	top: 0;
+	right: 0;
+	color: white;
+	margin: 16px;
+	text-align: center;
+	font-size: 12px;
+	font-family: sans-serif;
+	background-color:#444444;
+	cursor: pointer;
+	padding: 6px;
+	box-shadow: 1px 1px 1px rgba(0,0,0,.25);
+}
+
+#code-csp-warning:hover {
+	text-decoration: none;
+	background-color:#007acc;
+	box-shadow: 2px 2px 2px rgba(0,0,0,.25);
+}
+
+body.scrollBeyondLastLine {
+	margin-bottom: calc(100vh - 22px);
+}
+
+body.showEditorSelection .code-line {
+	position: relative;
+}
+
+body.showEditorSelection .code-active-line:before,
+body.showEditorSelection .code-line:hover:before {
+	content: "";
+	display: block;
+	position: absolute;
+	top: 0;
+	left: -12px;
+	height: 100%;
+}
+
+body.showEditorSelection li.code-active-line:before,
+body.showEditorSelection li.code-line:hover:before {
+	left: -30px;
+}
+
+.vscode-light.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+.vscode-light.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(0, 0, 0, 0.40);
+}
+
+.vscode-light.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-dark.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.4);
+}
+
+.vscode-dark.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 255, 255, 0.60);
+}
+
+.vscode-dark.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+.vscode-high-contrast.showEditorSelection .code-active-line:before {
+	border-left: 3px solid rgba(255, 160, 0, 0.7);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line:hover:before {
+	border-left: 3px solid rgba(255, 160, 0, 1);
+}
+
+.vscode-high-contrast.showEditorSelection .code-line .code-line:hover:before {
+	border-left: none;
+}
+
+img {
+	max-width: 100%;
+	max-height: 100%;
+}
+
+a {
+	text-decoration: none;
+}
+
+a:hover {
+	text-decoration: underline;
+}
+
+a:focus,
+input:focus,
+select:focus,
+textarea:focus {
+	outline: 1px solid -webkit-focus-ring-color;
+	outline-offset: -1px;
+}
+
+hr {
+	border: 0;
+	height: 2px;
+	border-bottom: 2px solid;
+}
+
+h1 {
+	padding-bottom: 0.3em;
+	line-height: 1.2;
+	border-bottom-width: 1px;
+	border-bottom-style: solid;
+}
+
+h1, h2, h3 {
+	font-weight: normal;
+}
+
+table {
+	border-collapse: collapse;
+}
+
+table > thead > tr > th {
+	text-align: left;
+	border-bottom: 1px solid;
+}
+
+table > thead > tr > th,
+table > thead > tr > td,
+table > tbody > tr > th,
+table > tbody > tr > td {
+	padding: 5px 10px;
+}
+
+table > tbody > tr + tr > td {
+	border-top: 1px solid;
+}
+
+blockquote {
+	margin: 0 7px 0 5px;
+	padding: 0 16px 0 10px;
+	border-left-width: 5px;
+	border-left-style: solid;
+}
+
+code {
+	font-family: Menlo, Monaco, Consolas, "Droid Sans Mono", "Courier New", monospace, "Droid Sans Fallback";
+	font-size: 1em;
+	line-height: 1.357em;
+}
+
+body.wordWrap pre {
+	white-space: pre-wrap;
+}
+
+pre:not(.hljs),
+pre.hljs code > div {
+	padding: 16px;
+	border-radius: 3px;
+	overflow: auto;
+}
+
+pre code {
+	color: var(--vscode-editor-foreground);
+	tab-size: 4;
+}
+
+/** Theming */
+
+.vscode-light pre {
+	background-color: rgba(220, 220, 220, 0.4);
+}
+
+.vscode-dark pre {
+	background-color: rgba(10, 10, 10, 0.4);
+}
+
+.vscode-high-contrast pre {
+	background-color: rgb(0, 0, 0);
+}
+
+.vscode-high-contrast h1 {
+	border-color: rgb(0, 0, 0);
+}
+
+.vscode-light table > thead > tr > th {
+	border-color: rgba(0, 0, 0, 0.69);
+}
+
+.vscode-dark table > thead > tr > th {
+	border-color: rgba(255, 255, 255, 0.69);
+}
+
+.vscode-light h1,
+.vscode-light hr,
+.vscode-light table > tbody > tr + tr > td {
+	border-color: rgba(0, 0, 0, 0.18);
+}
+
+.vscode-dark h1,
+.vscode-dark hr,
+.vscode-dark table > tbody > tr + tr > td {
+	border-color: rgba(255, 255, 255, 0.18);
+}
+
+</style>
+
+<style>
+/* Tomorrow Theme */
+/* http://jmblog.github.com/color-themes-for-google-code-highlightjs */
+/* Original theme - https://github.com/chriskempson/tomorrow-theme */
+
+/* Tomorrow Comment */
+.hljs-comment,
+.hljs-quote {
+	color: #8e908c;
+}
+
+/* Tomorrow Red */
+.hljs-variable,
+.hljs-template-variable,
+.hljs-tag,
+.hljs-name,
+.hljs-selector-id,
+.hljs-selector-class,
+.hljs-regexp,
+.hljs-deletion {
+	color: #c82829;
+}
+
+/* Tomorrow Orange */
+.hljs-number,
+.hljs-built_in,
+.hljs-builtin-name,
+.hljs-literal,
+.hljs-type,
+.hljs-params,
+.hljs-meta,
+.hljs-link {
+	color: #f5871f;
+}
+
+/* Tomorrow Yellow */
+.hljs-attribute {
+	color: #eab700;
+}
+
+/* Tomorrow Green */
+.hljs-string,
+.hljs-symbol,
+.hljs-bullet,
+.hljs-addition {
+	color: #718c00;
+}
+
+/* Tomorrow Blue */
+.hljs-title,
+.hljs-section {
+	color: #4271ae;
+}
+
+/* Tomorrow Purple */
+.hljs-keyword,
+.hljs-selector-tag {
+	color: #8959a8;
+}
+
+.hljs {
+	display: block;
+	overflow-x: auto;
+	color: #4d4d4c;
+	padding: 0.5em;
+}
+
+.hljs-emphasis {
+	font-style: italic;
+}
+
+.hljs-strong {
+	font-weight: bold;
+}
+</style>
+
+<style>
+/*
+ * Markdown PDF CSS
+ */
+
+ body {
+	font-family: -apple-system, BlinkMacSystemFont, "Segoe WPC", "Segoe UI", "Ubuntu", "Droid Sans", sans-serif, "Meiryo";
+	padding: 0 12px;
+}
+
+pre {
+	background-color: #f8f8f8;
+	border: 1px solid #cccccc;
+	border-radius: 3px;
+	overflow-x: auto;
+	white-space: pre-wrap;
+	overflow-wrap: break-word;
+}
+
+pre:not(.hljs) {
+	padding: 23px;
+	line-height: 19px;
+}
+
+blockquote {
+	background: rgba(127, 127, 127, 0.1);
+	border-color: rgba(0, 122, 204, 0.5);
+}
+
+.emoji {
+	height: 1.4em;
+}
+
+code {
+	font-size: 14px;
+	line-height: 19px;
+}
+
+/* for inline code */
+:not(pre):not(.hljs) > code {
+	color: #C9AE75; /* Change the old color so it seems less like an error */
+	font-size: inherit;
+}
+
+/* Page Break : use <div class="page"/> to insert page break
+-------------------------------------------------------- */
+.page {
+	page-break-after: always;
+}
+
+</style>
+
+<script src="https://unpkg.com/mermaid/dist/mermaid.min.js"></script>
+</head>
+<body>
+  <script>
+    mermaid.initialize({
+      startOnLoad: true,
+      theme: document.body.classList.contains('vscode-dark') || document.body.classList.contains('vscode-high-contrast')
+          ? 'dark'
+          : 'default'
+    });
+  </script>
+<h1 id="%E9%85%92%E5%BA%97%E9%A2%84%E8%AE%A2%E5%B9%B3%E5%8F%B0">酒店预订平台</h1>
+<h2 id="%E9%A1%B9%E7%9B%AE%E7%AE%80%E4%BB%8B">项目简介</h2>
+<p>智慧出行酒店预订平台是一个面向现代旅游出行场景的综合服务体系，旨在为酒店商家与终端消费者之间搭建高效、便捷的信息交互桥梁。</p>
+<h2 id="%E9%A1%B9%E7%9B%AE%E7%BB%93%E6%9E%84">项目结构</h2>
+<pre class="hljs"><code><div>hotel-booking-platform/
+├── client/                 # 用户端（React H5 移动端）
+├── admin/                  # 管理端（React PC端）
+├── hotel-booking-taro/     # 小程序端（Taro 跨端框架）
+├── server/                 # 后端服务
+└── README.md
+</div></code></pre>
+<h2 id="%E6%8A%80%E6%9C%AF%E6%A0%88">技术栈</h2>
+<h3 id="%E5%89%8D%E7%AB%AF">前端</h3>
+<ul>
+<li><strong>用户端</strong>: React 18 + React Router + Ant Design Mobile</li>
+<li><strong>管理端</strong>: React 18 + React Router + Ant Design</li>
+<li><strong>状态管理</strong>: React Hooks + Context API</li>
+<li><strong>HTTP客户端</strong>: Axios</li>
+</ul>
+<h3 id="%E5%90%8E%E7%AB%AF">后端</h3>
+<ul>
+<li><strong>框架</strong>: Node.js + Express</li>
+<li><strong>数据库</strong>:
+<ul>
+<li>默认: 内存数据库</li>
+<li><strong>推荐</strong>: MongoDB + Mongoose ODM（✨ 已集成）</li>
+<li>可选: MySQL/PostgreSQL</li>
+</ul>
+</li>
+<li><strong>认证</strong>: JWT（双 Token）</li>
+</ul>
+<h2 id="%E5%8A%9F%E8%83%BD%E6%A8%A1%E5%9D%97">功能模块</h2>
+<h3 id="%E7%94%A8%E6%88%B7%E7%AB%AF%E7%A7%BB%E5%8A%A8%E7%AB%AF--%E5%B0%8F%E7%A8%8B%E5%BA%8F">用户端（移动端 / 小程序）</h3>
+<ol>
+<li>
+<p><strong>酒店查询页</strong></p>
+<ul>
+<li>顶部Banner广告</li>
+<li>地点定位（GPS + IP定位）</li>
+<li>关键字搜索</li>
+<li>入住日期选择</li>
+<li>筛选条件（星级、价格）</li>
+<li>快捷标签</li>
+<li>支持11个主要城市</li>
+</ul>
+</li>
+<li>
+<p><strong>酒店列表页</strong></p>
+<ul>
+<li>核心条件筛选</li>
+<li>详细筛选</li>
+<li>酒店列表（支持分页加载）</li>
+<li>多条件组合搜索</li>
+</ul>
+</li>
+<li>
+<p><strong>酒店详情页</strong></p>
+<ul>
+<li>酒店图片轮播</li>
+<li>基础信息展示</li>
+<li>日历选择（入住/离店日期）</li>
+<li>房型价格列表</li>
+<li><strong>🛒 加入购物车</strong>（一键添加）</li>
+<li>实时价格计算</li>
+</ul>
+</li>
+<li>
+<p><strong>购物车页面</strong> ✨ NEW</p>
+<ul>
+<li>查看已选房间</li>
+<li>修改数量</li>
+<li>删除商品</li>
+<li>清空购物车</li>
+<li>价格汇总</li>
+<li>前往结算</li>
+</ul>
+</li>
+<li>
+<p><strong>订单管理页面</strong> ✨ NEW</p>
+<ul>
+<li>订单列表（全部/待支付/已确认/已支付/已取消）</li>
+<li>订单详情查看</li>
+<li>支付订单</li>
+<li>取消订单</li>
+<li>订单状态实时更新</li>
+</ul>
+</li>
+<li>
+<p><strong>订单结算页面</strong> ✨ NEW</p>
+<ul>
+<li>填写入住人信息</li>
+<li>联系电话</li>
+<li>电子邮箱（可选）</li>
+<li>特殊需求备注</li>
+<li>一键下单</li>
+</ul>
+</li>
+</ol>
+<h3 id="%E7%AE%A1%E7%90%86%E7%AB%AFpc%E7%AB%AF">管理端（PC端）</h3>
+<ol>
+<li>
+<p><strong>用户登录/注册</strong></p>
+<ul>
+<li>支持商户和管理员两种角色</li>
+</ul>
+</li>
+<li>
+<p><strong>酒店信息管理</strong>（商户角色）</p>
+<ul>
+<li>酒店信息录入</li>
+<li>信息编辑和修改</li>
+</ul>
+</li>
+<li>
+<p><strong>酒店审核管理</strong>（管理员角色）</p>
+<ul>
+<li>信息审核（通过/不通过）</li>
+<li>酒店发布</li>
+<li>酒店下线</li>
+</ul>
+</li>
+</ol>
+<h2 id="%E5%BF%AB%E9%80%9F%E5%BC%80%E5%A7%8B">快速开始</h2>
+<h3 id="%F0%9F%93%A6-mongodb-%E8%AE%BE%E7%BD%AE%E6%8E%A8%E8%8D%90">📦 MongoDB 设置（推荐）</h3>
+<p>本项目已集成 MongoDB 支持。如要使用 MongoDB：</p>
+<pre class="hljs"><code><div><span class="hljs-comment"># 1. 启动 MongoDB (Docker)</span>
+docker run -d -p 27017:27017 --name mongodb mongo:latest
+<span class="hljs-comment"># #如果失败，重建容器：</span>
+docker rm -f mongodb
+docker run -d -p 27017:27017 --name mongodb `
+  -e MONGO_INITDB_ROOT_USERNAME=admin `
+  -e MONGO_INITDB_ROOT_PASSWORD=admin123 `
+  mongo:latest
+  然后再测：
+  docker run --rm -it mongo:latest mongosh `
+  <span class="hljs-string">"mongodb://admin:admin123@host.docker.internal:27017/admin?authSource=admin"</span> `
+  --<span class="hljs-built_in">eval</span> <span class="hljs-string">"db.runCommand({connectionStatus:1})"</span>
+直接连容器网络
+docker run --rm -it --network container:mongodb mongo:latest mongosh `
+  <span class="hljs-string">"mongodb://admin:admin123@localhost:27017/admin?authSource=admin"</span> `
+  --<span class="hljs-built_in">eval</span> <span class="hljs-string">"db.runCommand({connectionStatus:1})"</span>
+mongDB CONNECT STRING :mongodb://admin:admin123@localhost:27017/admin
+<span class="hljs-comment"># 2. 配置环境变量</span>
+<span class="hljs-built_in">cd</span> server
+cp .env.example .env
+<span class="hljs-comment"># 编辑 .env，设置 MONGODB_URI</span>
+
+<span class="hljs-comment"># 3. 初始化数据（可选）</span>
+node scripts/seed.js
+</div></code></pre>
+<p>详细说明请参考：</p>
+<ul>
+<li><a href="./MONGODB_QUICK_START.md">MongoDB 快速开始指南</a></li>
+<li><a href="./MONGODB_MIGRATION_GUIDE.md">完整迁移指南</a></li>
+<li><a href="./MONGODB_COMPLETION_CHECKLIST.md">完成清单与工作指南</a></li>
+</ul>
+<h3 id="%E5%AE%89%E8%A3%85%E4%BE%9D%E8%B5%96">安装依赖</h3>
+<pre class="hljs"><code><div><span class="hljs-comment"># 安装所有依赖</span>
+npm run install-all
+</div></code></pre>
+<h3 id="%E5%BC%80%E5%8F%91%E6%A8%A1%E5%BC%8F">开发模式</h3>
+<pre class="hljs"><code><div><span class="hljs-comment"># 同时启动所有服务</span>
+npm run dev
+
+<span class="hljs-comment"># 或分别启动</span>
+npm run dev:client      <span class="hljs-comment"># 启动用户端（端口3000）</span>
+npm run dev:admin       <span class="hljs-comment"># 启动管理端（端口3001）</span>
+npm run dev:server      <span class="hljs-comment"># 启动后端服务（端口5000）</span>
+npm run dev:taro        <span class="hljs-comment"># 启动小程序开发服务</span>
+</div></code></pre>
+<p>结束占用端口的进程：netstat -ano | findstr :5000   taskkill /PID 29908 /F</p>
+<h3 id="taro-%E5%B0%8F%E7%A8%8B%E5%BA%8F%E7%BC%96%E8%AF%91">Taro 小程序编译</h3>
+<pre class="hljs"><code><div><span class="hljs-built_in">cd</span> hotel-booking-taro
+
+<span class="hljs-comment"># 开发调试</span>
+npm run dev:weapp       <span class="hljs-comment"># 编译微信小程序（开发模式）</span>
+npm run dev:alipay      <span class="hljs-comment"># 编译支付宝小程序（开发模式）</span>
+npm run dev:h5          <span class="hljs-comment"># 编译 H5（开发模式）</span>
+
+<span class="hljs-comment"># 生产构建</span>
+npm run build:weapp     <span class="hljs-comment"># 编译微信小程序（生产模式）</span>
+npm run build:alipay    <span class="hljs-comment"># 编译支付宝小程序（生产模式）</span>
+npm run build:h5        <span class="hljs-comment"># 编译 H5（生产模式）</span>
+</div></code></pre>
+<p>编译完成后：</p>
+<ul>
+<li><strong>微信小程序</strong>：用微信开发者工具打开 <code>hotel-booking-taro/dist/weapp</code></li>
+<li><strong>支付宝小程序</strong>：用支付宝开发者工具打开 <code>hotel-booking-taro/dist/alipay</code></li>
+<li><strong>H5</strong>：访问本地服务 <code>http://localhost:10086</code></li>
+</ul>
+<h3 id="%E6%9E%84%E5%BB%BA%E7%94%9F%E4%BA%A7%E7%89%88%E6%9C%AC">构建生产版本</h3>
+<pre class="hljs"><code><div>npm run build
+</div></code></pre>
+<h2 id="%E9%BB%98%E8%AE%A4%E8%B4%A6%E5%8F%B7">默认账号</h2>
+<h3 id="%E7%AE%A1%E7%90%86%E5%91%98%E8%B4%A6%E5%8F%B7">管理员账号</h3>
+<ul>
+<li>用户名: admin</li>
+<li>密码: admin123</li>
+</ul>
+<h3 id="%E5%95%86%E6%88%B7%E8%B4%A6%E5%8F%B7">商户账号</h3>
+<ul>
+<li>用户名: merchant1</li>
+<li>密码: merchant123</li>
+</ul>
+<h2 id="api%E6%96%87%E6%A1%A3">API文档</h2>
+<h3 id="%E5%9F%BA%E7%A1%80%E8%B7%AF%E5%BE%84">基础路径</h3>
+<ul>
+<li>开发环境: <code>http://localhost:5000/api</code></li>
+</ul>
+<h3 id="%E4%B8%BB%E8%A6%81%E6%8E%A5%E5%8F%A3">主要接口</h3>
+<h4 id="%E8%AE%A4%E8%AF%81">认证</h4>
+<ul>
+<li><code>POST /api/auth/register</code> - 用户注册</li>
+<li><code>POST /api/auth/login</code> - 用户登录</li>
+<li><code>POST /api/auth/refresh</code> - 刷新 access token（依赖 httpOnly Cookie）</li>
+<li><code>POST /api/auth/logout</code> - 退出登录（清理 refresh token）</li>
+<li><code>GET /api/auth/me</code> - 获取当前用户信息</li>
+</ul>
+<h4 id="%E9%85%92%E5%BA%97%E4%BF%A1%E6%81%AF">酒店信息</h4>
+<ul>
+<li><code>GET /api/hotels</code> - 获取酒店列表</li>
+<li><code>GET /api/hotels/:id</code> - 获取酒店详情</li>
+<li><code>POST /api/hotels</code> - 创建酒店（商户）</li>
+<li><code>PUT /api/hotels/:id</code> - 更新酒店（商户）</li>
+<li><code>DELETE /api/hotels/:id</code> - 删除酒店（商户）</li>
+</ul>
+<h4 id="%E5%AE%A1%E6%A0%B8%E7%AE%A1%E7%90%86">审核管理</h4>
+<ul>
+<li><code>GET /api/admin/hotels/pending</code> - 获取待审核酒店</li>
+<li><code>PUT /api/admin/hotels/:id/approve</code> - 审核通过</li>
+<li><code>PUT /api/admin/hotels/:id/reject</code> - 审核拒绝</li>
+<li><code>PUT /api/admin/hotels/:id/publish</code> - 发布酒店</li>
+<li><code>PUT /api/admin/hotels/:id/unpublish</code> - 下线酒店</li>
+</ul>
+<h2 id="%E6%95%B0%E6%8D%AE%E5%AD%97%E6%AE%B5%E8%AF%B4%E6%98%8E">数据字段说明</h2>
+<h3 id="%E9%85%92%E5%BA%97%E7%8A%B6%E6%80%81%E5%AD%97%E6%AE%B5">酒店状态字段</h3>
+<ul>
+<li>
+<p><strong>status</strong>: 发布状态</p>
+<ul>
+<li><code>draft</code>: 草稿（商户创建后的初始状态）</li>
+<li><code>published</code>: 已发布（客户端可见）</li>
+<li><code>unpublished</code>: 已下线</li>
+</ul>
+</li>
+<li>
+<p><strong>reviewStatus</strong>: 审核状态</p>
+<ul>
+<li><code>pending</code>: 待审核（商户创建后的初始状态）</li>
+<li><code>approved</code>: 审核通过（可以发布）</li>
+<li><code>rejected</code>: 审核拒绝</li>
+</ul>
+</li>
+</ul>
+<h3 id="%E9%85%92%E5%BA%97%E5%AE%A1%E6%A0%B8%E5%8F%91%E5%B8%83%E6%B5%81%E7%A8%8B">酒店审核发布流程</h3>
+<ol>
+<li><strong>商户创建酒店</strong> → status: <code>draft</code>, reviewStatus: <code>pending</code></li>
+<li><strong>管理员审核通过</strong> → reviewStatus: <code>approved</code>（或 <code>rejected</code>）</li>
+<li><strong>管理员发布酒店</strong> → status: <code>published</code></li>
+<li><strong>客户端可见</strong> → 只显示 status 为 <code>published</code> 的酒店</li>
+</ol>
+<h1 id="%E6%9F%A5%E8%AF%A2%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%85%92%E5%BA%97%E5%8F%AA%E6%98%BE%E7%A4%BApublished%E7%8A%B6%E6%80%81">查询客户端酒店（只显示published状态）</h1>
+<p>Invoke-RestMethod http://127.0.0.1:5000/api/hotels |
+Select-Object -ExpandProperty data |
+Select-Object nameCn, status, reviewStatus |
+Format-Table</p>
+<h3 id="%E9%85%92%E5%BA%97%E4%BF%A1%E6%81%AF%E5%BF%85%E5%A1%AB%E5%AD%97%E6%AE%B5">酒店信息必填字段</h3>
+<ul>
+<li>酒店名称（中英文）</li>
+<li>酒店地址</li>
+<li>酒店星级</li>
+<li>酒店房型
+[{&quot;type&quot;:&quot;标准间&quot;,&quot;price&quot;:300,&quot;description&quot;:&quot;25平米&quot;}]</li>
+<li>酒店价格</li>
+<li>开业时间</li>
+</ul>
+<h3 id="%E5%8F%AF%E9%80%89%E5%AD%97%E6%AE%B5">可选字段</h3>
+<ul>
+<li>附近景点</li>
+<li>交通信息</li>
+<li>附近商场</li>
+<li>优惠信息</li>
+</ul>
+<h2 id="%E8%AF%84%E5%88%86%E6%A0%87%E5%87%86">评分标准</h2>
+<ul>
+<li>功能完成度：60分</li>
+<li>技术复杂度：10分</li>
+<li>用户体验：10分</li>
+<li>代码质量：10分</li>
+<li>项目创新性：10分</li>
+</ul>
+<h2 id="%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9">注意事项</h2>
+<ol>
+<li>代码需要有清晰的Git提交记录</li>
+<li>不要一次性提交所有代码</li>
+<li>每个提交应该有明确的意义</li>
+<li>可以使用开源UI组件库</li>
+</ol>
+<h2 id="%E5%8F%8C-token-%E8%AE%A4%E8%AF%81%E8%AF%B4%E6%98%8E">双 Token 认证说明</h2>
+<p>本项目使用 Access Token + Refresh Token 双 Token 机制：</p>
+<ul>
+<li>Access Token：短期有效（默认 15 分钟），通过 Authorization Bearer Header 传递。</li>
+<li>Refresh Token：长期有效（默认 7 天），写入 httpOnly Cookie，仅用于刷新 Access Token。</li>
+</ul>
+<p>前端已内置 401 自动刷新逻辑：当 Access Token 过期会调用刷新接口，拿到新 Access Token 后重试原请求。
+PS F:\hotel-booking-platform&gt; .\test-double-token.ps1
+========== Double Token Test ==========                                         Server: http://localhost:5000<br>
+[Test 1] Login and get tokens...
+OK Login successful                                                             OK Access Token: eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...                              OK Refresh Token Cookie set in response header                                    - Found Set-Cookie header with refresh_token</p>
+<p>[Test 2] Access protected endpoint...                                             OK Access successful                                                              - User: merchant                                                                - Role: merchant                                                                                                                                            [Test 3] Refresh with Refresh Token...                                            OK Refresh successful                                                           OK New Access Token: eyJhbGciOiJIUzI1NiIsInR5cCI6Ik...<br>
+WARN Token unchanged</p>
+<p>[Test 4] Access with new token...
+OK New token valid</p>
+<p>[Test 5] Logout...
+OK Logout successful
+OK Refresh token invalidated (expected)</p>
+<h3 id="mongodb-%E6%A0%B8%E5%BF%83%E7%89%B9%E6%80%A7">MongoDB 核心特性</h3>
+<p>✨ 已为项目集成：</p>
+<ul>
+<li>✅ <strong>Mongoose 数据模型</strong>：User 和 Hotel 模型，包含完整验证和钩子</li>
+<li>✅ <strong>自动连接管理</strong>：生产级数据库连接配置，支持多环境</li>
+<li>✅ <strong>密码加密</strong>：自动 bcrypt 哈希处理（pre-save 钩子）</li>
+<li>✅ <strong>索引优化</strong>：文本索引和复合索引，提升查询性能</li>
+<li>✅ <strong>数据验证</strong>：Schema 级别的字段验证和类型检查</li>
+<li>✅ <strong>数据种子脚本</strong>：快速初始化示例数据（4个用户 + 4家酒店）</li>
+<li>✅ <strong>错误处理</strong>：MongoDB 特定错误处理（ValidationError, E11000 等）</li>
+<li>✅ <strong>聚合管道</strong>：支持复杂查询（按城市分组、统计等）</li>
+</ul>
+<h3 id="%E5%BF%AB%E9%80%9F%E5%90%AF%E5%8A%A8-mongodb">快速启动 MongoDB</h3>
+<pre class="hljs"><code><div><span class="hljs-comment"># Docker 启动（推荐）</span>
+docker run -d -p 27017:27017 --name mongodb mongo:latest
+
+<span class="hljs-comment"># 初始化应用</span>
+<span class="hljs-built_in">cd</span> server
+npm install
+cp .env.example .env
+<span class="hljs-comment"># 编辑 .env，设置 MONGODB_URI=mongodb://localhost:27017/hotel-booking-dev</span>
+
+<span class="hljs-comment"># 初始化数据（可选）</span>
+node scripts/seed.js
+
+<span class="hljs-comment"># 启动服务器</span>
+npm run dev
+</div></code></pre>
+<p>💡 <strong>提示</strong>: 详细说明见 <a href="./MONGODB_QUICK_START.md">MONGODB_QUICK_START.md</a></p>
+<h2 id="%E5%BC%80%E5%8F%91%E5%9B%A2%E9%98%9F">开发团队</h2>
+
+</body>
+</html>

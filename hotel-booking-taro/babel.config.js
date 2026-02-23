@@ -8,5 +8,9 @@ module.exports = {
       compiler: 'webpack5',
       useBuiltIns: process.env.TARO_ENV === 'h5' ? 'usage' : false
     }]
+  ],
+  plugins: [
+    '@babel/plugin-transform-optional-chaining',
+    '@babel/plugin-transform-nullish-coalescing-operator'
   ]
 }
