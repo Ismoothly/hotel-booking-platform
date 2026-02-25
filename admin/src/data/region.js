@@ -455,3 +455,19 @@ export function getRegionValueFromHotel(hotel) {
   }
   return undefined;
 }
+
+/** 筛选用：从省市区数据中提取所有城市选项（去重） */
+export function getCityOptionsForFilter() {
+  const seen = new Set();
+  const list = [];
+  regionData.forEach((prov) => {
+    (prov.children || []).forEach((city) => {
+      const v = city.value || city.label;
+      if (v && !seen.has(v)) {
+        seen.add(v);
+        list.push({ label: v, value: v });
+      }
+    });
+  });
+  return list.sort((a, b) => (a.label || '').localeCompare(b.label || '', 'zh-CN'));
+}
