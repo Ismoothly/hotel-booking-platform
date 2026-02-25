@@ -409,13 +409,11 @@ exports.updateHotelDiscounts = async (req, res) => {
       });
     }
 
-    if (
-      hotel.merchantId.toString() !== req.user.id &&
-      req.user.role !== "admin"
-    ) {
+    // 只允许该酒店的商户修改折扣，管理员无权修改
+    if (hotel.merchantId.toString() !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: "无权限更新此酒店",
+        message: "只有酒店的商户可以修改折扣信息",
       });
     }
 
