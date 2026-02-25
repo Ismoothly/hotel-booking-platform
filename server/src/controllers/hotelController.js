@@ -245,6 +245,75 @@ exports.updateHotel = async (req, res) => {
 };
 
 /**
+ * 仅更新酒店房型价格（不触发重新审核）
+ */
+exports.updateHotelRoomPrices = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { rooms: roomsPayload } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: '酒店ID格式无效'
+      });
+    }
+
+    const hotel = await Hotel.findById(id);
+
+    if (!hotel) {
+      return res.status(404).json({
+        success: false,
+        message: '酒店不存在'
+      });
+    }
+
+    if (hotel.merchantId.toString() !== req.user.id && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: '无权限更新此酒店'
+      });
+    }
+
+    if (!Array.isArray(roomsPayload) || roomsPayload.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: '请提供房型价格数据'
+      });
+    }
+
+    for (const item of roomsPayload) {
+      const room = hotel.rooms.find((r) => r.type === item.type);
+      if (room && typeof item.price === 'number' && item.price >= 0) {
+        room.price = item.price;
+      }
+    }
+
+    await hotel.save();
+
+    res.json({
+      success: true,
+      message: '房型价格已更新',
+      data: hotel
+    });
+  } catch (error) {
+    console.error('更新房型价格失败:', error);
+    if (error.name === 'ValidationError') {
+      const messages = Object.values(error.errors).map((e) => e.message);
+      return res.status(400).json({
+        success: false,
+        message: '数据验证失败',
+        errors: messages
+      });
+    }
+    res.status(400).json({
+      success: false,
+      message: error.message || '更新房型价格失败'
+    });
+  }
+};
+
+/**
  * 删除酒店（商户）
  */
 exports.deleteHotel = async (req, res) => {

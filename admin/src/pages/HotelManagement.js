@@ -43,6 +43,9 @@ const HotelManagement = () => {
   const [form] = Form.useForm();
   const [reviewForm] = Form.useForm();
   const [imageList, setImageList] = useState([]);
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
+  const [roomPricesEdit, setRoomPricesEdit] = useState({});
+  const [savingPricesHotelId, setSavingPricesHotelId] = useState(null);
 
   useEffect(() => {
     fetchHotels();
@@ -215,8 +218,72 @@ const HotelManagement = () => {
     }
   };
 
+  const handleExpandRow = (expanded, record) => {
+    const next = expanded
+      ? [...expandedRowKeys, record._id]
+      : expandedRowKeys.filter((k) => k !== record._id);
+    setExpandedRowKeys(next);
+    if (expanded && record.rooms?.length) {
+      setRoomPricesEdit((prev) => ({
+        ...prev,
+        [record._id]: record.rooms.map((r) => ({
+          type: r.type,
+          price: r.price,
+          quantity: r.quantity ?? 1,
+          description: r.description || ''
+        }))
+      }));
+    }
+  };
+
+  const handleRoomPriceChange = (hotelId, index, value) => {
+    setRoomPricesEdit((prev) => {
+      const list = [...(prev[hotelId] || [])];
+      if (list[index]) list[index] = { ...list[index], price: value };
+      return { ...prev, [hotelId]: list };
+    });
+  };
+
+  const handleSaveRoomPrices = async (record) => {
+    const list = roomPricesEdit[record._id] || record.rooms || [];
+    if (!list.length) {
+      message.warning('暂无房型');
+      return;
+    }
+    try {
+      setSavingPricesHotelId(record._id);
+      await hotelAPI.updateHotelRoomPrices(record._id, list.map((r) => ({ type: r.type, price: Number(r.price) })));
+      message.success('价格已更新，无需重新审核');
+      setRoomPricesEdit((prev) => ({ ...prev, [record._id]: undefined }));
+      fetchHotels();
+    } catch (error) {
+      message.error(error?.message || '保存失败');
+    } finally {
+      setSavingPricesHotelId(null);
+    }
+  };
+
   const columns = [
-    { title: '酒店名称', dataIndex: 'nameCn', key: 'nameCn' },
+    {
+      title: '酒店名称',
+      dataIndex: 'nameCn',
+      key: 'nameCn',
+      render: (text, record) => (
+        <Button
+          type="link"
+          style={{ padding: 0, height: 'auto', fontWeight: 500 }}
+          onClick={() => {
+            const isExpanded = expandedRowKeys.includes(record._id);
+            handleExpandRow(!isExpanded, record);
+          }}
+        >
+          {text}
+          <span style={{ marginLeft: 4, color: '#999' }}>
+            {expandedRowKeys.includes(record._id) ? '▼' : '▶'}
+          </span>
+        </Button>
+      )
+    },
     { title: '星级', dataIndex: 'starRating', key: 'starRating', render: (star) => `${star}星` },
     { title: '地址', dataIndex: 'address', key: 'address', ellipsis: true },
     {
@@ -331,6 +398,55 @@ const HotelManagement = () => {
         dataSource={hotels}
         rowKey="_id"
         loading={loading}
+        pagination={false}
+        expandable={{
+          expandedRowKeys,
+          onExpand: handleExpandRow,
+          expandedRowRender: (record) => {
+            const rooms = (roomPricesEdit[record._id] ?? record.rooms ?? []).map((r, i) => ({ ...r, _index: i }));
+            return (
+              <div style={{ padding: '12px 24px 12px 48px', background: '#fafafa' }}>
+                <div style={{ marginBottom: 8, fontWeight: 500 }}>房型与价格（仅修改价格无需重新审核）</div>
+                <Table
+                  size="small"
+                  pagination={false}
+                  dataSource={rooms}
+                  rowKey={(r) => `${record._id}-${r._index}-${r.type}`}
+                  columns={[
+                    { title: '类型', dataIndex: 'type', key: 'type', width: 120 },
+                    {
+                      title: '价格（元）',
+                      key: 'price',
+                      width: 160,
+                      render: (_, row) => (
+                        <InputNumber
+                          min={0}
+                          value={row.price}
+                          onChange={(v) => handleRoomPriceChange(record._id, row._index, v)}
+                          addonAfter="元"
+                          style={{ width: '100%' }}
+                        />
+                      )
+                    },
+                    { title: '数量', dataIndex: 'quantity', key: 'quantity', width: 80, render: (v) => v ?? '-' },
+                    { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true, render: (v) => v || '-' }
+                  ]}
+                />
+                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    type="primary"
+                    size="small"
+                    loading={savingPricesHotelId === record._id}
+                    onClick={() => handleSaveRoomPrices(record)}
+                  >
+                    保存价格
+                  </Button>
+                </div>
+              </div>
+            );
+          },
+          rowExpandable: (record) => (record.rooms && record.rooms.length > 0)
+        }}
       />
 
       <Modal

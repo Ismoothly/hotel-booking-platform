@@ -16,6 +16,9 @@ router.get('/merchant/my-hotels', authorize('merchant', 'admin'), hotelControlle
 // 创建酒店
 router.post('/', authorize('merchant', 'admin'), hotelController.createHotel);
 
+// 仅更新房型价格（不触发重新审核）
+router.put('/:id/room-prices', authorize('merchant', 'admin'), hotelController.updateHotelRoomPrices);
+
 // 更新酒店
 router.put('/:id', authorize('merchant', 'admin'), hotelController.updateHotel);
 

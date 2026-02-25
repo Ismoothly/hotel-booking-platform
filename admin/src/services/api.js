@@ -82,6 +82,7 @@ export const hotelAPI = {
   getMerchantHotels: () => api.get('/hotels/merchant/my-hotels'),
   createHotel: (data) => api.post('/hotels', data),
   updateHotel: (id, data) => api.put(`/hotels/${id}`, data),
+  updateHotelRoomPrices: (id, rooms) => api.put(`/hotels/${id}/room-prices`, { rooms }),
   deleteHotel: (id) => api.delete(`/hotels/${id}`)
 };
 
