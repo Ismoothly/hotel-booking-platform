@@ -407,11 +407,11 @@ export default function Index() {
 
         <View className="mb-2 h-8 relative flex items-center">
           <View className="absolute left-3 top-1/2 -translate-y-1/2">
-            <Image src={ICONS.search} className="w-4 h-4 translate-y-2" />
+            <Image src={ICONS.search} className="w-4 h-4 translate-y-1" />
           </View>
           <Input
-            className="w-full h-8 leading-8 pl-10 pr-4 pt-4 bg-white rounded-xl text-28px box-border placeholder-grayCCC border border-solid border-border"
-            style={{ lineHeight: "32px" }}
+            className="w-full h-8 leading-8 pl-10 pr-4 bg-white rounded-xl text-28px box-border placeholder-grayCCC border border-solid border-border"
+            style={{ lineHeight: "3.2px" }}
             type="text"
             value={searchValue}
             onInput={(e) => handleSearch(e.detail.value)}
@@ -464,8 +464,8 @@ export default function Index() {
             className="flex items-center justify-center gap-2 flex-1 bg-primary text-white border border-solid border-primary rounded-xl h-8 leading-8 px-4 text-28px font-bold shadow-primary"
             onClick={() => fetchHotels()}
           >
-            <Image src={ICONS.searchWhite} className="w-4 h-4 translate-y-2" />
-            <Text className="inline-block relative top-1">搜索</Text>
+            <Image src={ICONS.searchWhite} className="w-4 h-4" />
+            <Text className="inline-block relative">搜索</Text>
           </View>
         </View>
 
@@ -528,7 +528,7 @@ export default function Index() {
           {QUICK_TAGS.map((tag, index) => (
             <View
               key={index}
-              className={`px-4 py-2 rounded-full text-base shadow-card whitespace-nowrap ${searchValue === tag ? "bg-primary text-white" : "bg-white text-text2"}`}
+              className={`px-4 h-8 flex items-center justify-center rounded-full text-base shadow-card whitespace-nowrap ${searchValue === tag ? "bg-primary text-white" : "bg-white text-text2"}`}
               onClick={() => handleTagClick(tag)}
             >
               {tag}
