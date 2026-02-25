@@ -2,15 +2,19 @@ const Hotel = require('../models/Hotel-mongoose');
 const mongoose = require('mongoose');
 
 /**
- * 获取所有酒店（包括未发布的）- 支持分页
+ * 获取所有酒店（包括未发布的）- 支持分页与筛选
  */
 exports.getAllHotels = async (req, res) => {
   try {
-    const { status, reviewStatus, merchantId, page = 1, limit = 10 } = req.query;
+    const { status, reviewStatus, merchantId, city, page = 1, limit = 10 } = req.query;
 
     const query = {};
     if (status) query.status = status;
     if (reviewStatus) query.reviewStatus = reviewStatus;
+    if (city && String(city).trim()) {
+      const cityStr = String(city).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.city = new RegExp(`^${cityStr}`);
+    }
     if (merchantId) {
       if (!mongoose.Types.ObjectId.isValid(merchantId)) {
         return res.status(400).json({

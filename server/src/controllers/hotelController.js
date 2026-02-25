@@ -532,15 +532,22 @@ exports.deleteHotel = async (req, res) => {
  * 获取商户的酒店列表
  */
 /**
- * 获取商户的酒店列表 - 支持分页
+ * 获取商户的酒店列表 - 支持分页与筛选
  */
 exports.getMerchantHotels = async (req, res) => {
   try {
-    const { page = 1, limit = 10 } = req.query;
+    const { page = 1, limit = 10, city, reviewStatus, status } = req.query;
     const pageNum = Math.max(1, parseInt(page, 10));
     const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
     const skip = (pageNum - 1) * limitNum;
     const query = { merchantId: req.user.id };
+
+    if (city && String(city).trim()) {
+      const cityStr = String(city).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      query.city = new RegExp(`^${cityStr}`);
+    }
+    if (reviewStatus) query.reviewStatus = reviewStatus;
+    if (status) query.status = status;
 
     const [hotels, total] = await Promise.all([
       Hotel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),

@@ -23,7 +23,7 @@ import {
 import { PlusOutlined, EditOutlined, DeleteOutlined, InboxOutlined, EyeOutlined } from '@ant-design/icons';
 import { hotelAPI, adminAPI, uploadAPI } from '../services/api';
 import { useAuth } from '../contexts/AuthContext';
-import { regionData, getRegionValueFromHotel } from '../data/region';
+import { regionData, getRegionValueFromHotel, getCityOptionsForFilter } from '../data/region';
 
 const { TextArea } = Input;
 const { Option } = Select;
@@ -52,20 +52,30 @@ const HotelManagement = () => {
   const PAGE_SIZE = 10;
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [filterCity, setFilterCity] = useState('');
+  const [filterReviewStatus, setFilterReviewStatus] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
 
   useEffect(() => {
     fetchHotels(1);
   }, []);
 
-  const fetchHotels = async (pageNum = 1) => {
+  const fetchHotels = async (pageNum = 1, filterOverrides = {}) => {
     try {
       setLoading(true);
       const limit = PAGE_SIZE;
+      const params = { page: pageNum, limit };
+      const city = filterOverrides.city !== undefined ? filterOverrides.city : filterCity;
+      const reviewStatus = filterOverrides.reviewStatus !== undefined ? filterOverrides.reviewStatus : filterReviewStatus;
+      const status = filterOverrides.status !== undefined ? filterOverrides.status : filterStatus;
+      if (city) params.city = city;
+      if (reviewStatus) params.reviewStatus = reviewStatus;
+      if (status) params.status = status;
       let response;
       if (user.role === 'admin') {
-        response = await adminAPI.getAllHotels({ page: pageNum, limit });
+        response = await adminAPI.getAllHotels(params);
       } else {
-        response = await hotelAPI.getMerchantHotels({ page: pageNum, limit });
+        response = await hotelAPI.getMerchantHotels(params);
       }
       setHotels(response.data || []);
       setTotal(response.total ?? 0);
@@ -431,6 +441,77 @@ const HotelManagement = () => {
           </Button>
         )}
       </Space>
+
+      <div style={{ marginBottom: 16 }}>
+        <Row gutter={16} align="middle">
+          <Col>
+            <span style={{ marginRight: 8 }}>所在地区</span>
+            <Select
+              placeholder="全部"
+              allowClear
+              style={{ width: 140 }}
+              value={filterCity || undefined}
+              onChange={(v) => {
+                setFilterCity(v || '');
+                setPage(1);
+                fetchHotels(1, { city: v || '' });
+              }}
+              options={getCityOptionsForFilter()}
+            />
+          </Col>
+          <Col>
+            <span style={{ marginRight: 8 }}>审核状态</span>
+            <Select
+              placeholder="全部"
+              allowClear
+              style={{ width: 120 }}
+              value={filterReviewStatus || undefined}
+              onChange={(v) => {
+                setFilterReviewStatus(v || '');
+                setPage(1);
+                fetchHotels(1, { reviewStatus: v || '' });
+              }}
+              options={[
+                { label: '待审核', value: 'pending' },
+                { label: '已通过', value: 'approved' },
+                { label: '已拒绝', value: 'rejected' }
+              ]}
+            />
+          </Col>
+          <Col>
+            <span style={{ marginRight: 8 }}>发布状态</span>
+            <Select
+              placeholder="全部"
+              allowClear
+              style={{ width: 120 }}
+              value={filterStatus || undefined}
+              onChange={(v) => {
+                setFilterStatus(v || '');
+                setPage(1);
+                fetchHotels(1, { status: v || '' });
+              }}
+              options={[
+                { label: '草稿', value: 'draft' },
+                { label: '已发布', value: 'published' },
+                { label: '已下线', value: 'unpublished' }
+              ]}
+            />
+          </Col>
+          <Col>
+            <Button
+              onClick={() => {
+                setFilterCity('');
+                setFilterReviewStatus('');
+                setFilterStatus('');
+                setPage(1);
+                fetchHotels(1, { city: '', reviewStatus: '', status: '' });
+              }}
+            >
+              重置
+            </Button>
+          </Col>
+        </Row>
+      </div>
 
       <Table
         columns={columns}
