@@ -335,21 +335,7 @@ const HotelManagement = () => {
       width: 260,
       render: (_, record) => (
         <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
-          <Space size={0.5} wrap>
-          <Button type="link" onClick={() => {
-            setDiscountHotel(record);
-            discountForm.setFieldsValue({
-              discounts: (record.discounts || []).map((d) => ({
-                type: d.type || 'general',
-                description: d.description || '',
-                percentage: d.percentage || 0,
-                validFrom: d.validFrom ? new Date(d.validFrom).toISOString().slice(0,10) : undefined,
-                validTo: d.validTo ? new Date(d.validTo).toISOString().slice(0,10) : undefined
-              }))
-            });
-            setDiscountModalVisible(true);
-          }}>设置折扣</Button>
-        <Space size={0.5}>
+          <Space size={0.5}>
           {user.role === 'merchant' && (
             <Button type="link" onClick={() => {
               setDiscountHotel(record);
@@ -403,7 +389,6 @@ const HotelManagement = () => {
               )}
             </>
           )}
-        </Space>
         </Space>
         </div>
       )
