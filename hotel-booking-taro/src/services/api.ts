@@ -59,8 +59,8 @@ const request = async (config: RequestConfig) => {
     }
 
     if (response.statusCode >= 400) {
-      const errorMsg = response.data?.message || '请求失败'
-      return Promise.reject(new Error(errorMsg))
+      const msg = response.data && (response.data as any).message ? (response.data as any).message : '请求失败'
+      return Promise.reject(new Error(msg))
     }
 
     return response.data
@@ -76,9 +76,10 @@ const request = async (config: RequestConfig) => {
     })
     
     // 判断是否为网络连接错误
-    const isNetworkError = error.errMsg?.includes('timeout') || 
-                          error.errMsg?.includes('fail') ||
-                          error.errMsg?.includes('连接') ||
+    const errMsg = error && error.errMsg ? String(error.errMsg) : ''
+    const isNetworkError = errMsg.indexOf('timeout') !== -1 ||
+                          errMsg.indexOf('fail') !== -1 ||
+                          errMsg.indexOf('连接') !== -1 ||
                           !error.statusCode
 
     if (isNetworkError) {

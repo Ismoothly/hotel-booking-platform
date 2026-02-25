@@ -67,8 +67,10 @@ export default function HotelDetail() {
       setLoading(true);
       const response = await hotelAPI.getHotelById(hotelId);
       setHotel(response.data);
-      if (response.data?.rooms && response.data.rooms.length > 0) {
-        setSelectedRoom(response.data.rooms[0]);
+      const rooms =
+        response.data && response.data.rooms ? response.data.rooms : null;
+      if (rooms && rooms.length > 0) {
+        setSelectedRoom(rooms[0]);
       }
     } catch (error) {
       Taro.showToast({
@@ -240,7 +242,7 @@ export default function HotelDetail() {
             {hotel.rooms.map((room, index) => (
               <View
                 key={index}
-                className={`room-card ${selectedRoom?.type === room.type ? "selected" : ""}`}
+                className={`room-card ${selectedRoom && selectedRoom.type === room.type ? "selected" : ""}`}
                 onClick={() => setSelectedRoom(room)}
               >
                 <View className="room-type">{room.type}</View>
