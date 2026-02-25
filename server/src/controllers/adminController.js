@@ -2,23 +2,15 @@ const Hotel = require('../models/Hotel-mongoose');
 const mongoose = require('mongoose');
 
 /**
- * 获取所有酒店（包括未发布的）
+ * 获取所有酒店（包括未发布的）- 支持分页
  */
 exports.getAllHotels = async (req, res) => {
   try {
-    const { status, reviewStatus, merchantId } = req.query;
+    const { status, reviewStatus, merchantId, page = 1, limit = 10 } = req.query;
 
-    // 构建查询条件
     const query = {};
-
-    if (status) {
-      query.status = status;
-    }
-
-    if (reviewStatus) {
-      query.reviewStatus = reviewStatus;
-    }
-
+    if (status) query.status = status;
+    if (reviewStatus) query.reviewStatus = reviewStatus;
     if (merchantId) {
       if (!mongoose.Types.ObjectId.isValid(merchantId)) {
         return res.status(400).json({
@@ -29,14 +21,26 @@ exports.getAllHotels = async (req, res) => {
       query.merchantId = merchantId;
     }
 
-    const hotels = await Hotel.find(query)
-      .populate('merchantId', 'username email')
-      .sort({ createdAt: -1 });
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [hotels, total] = await Promise.all([
+      Hotel.find(query)
+        .populate('merchantId', 'username email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Hotel.countDocuments(query)
+    ]);
 
     res.json({
       success: true,
       data: hotels,
-      total: hotels.length
+      total,
+      page: pageNum,
+      limit: limitNum
     });
   } catch (error) {
     console.error('获取酒店列表失败:', error);
@@ -48,20 +52,31 @@ exports.getAllHotels = async (req, res) => {
 };
 
 /**
- * 获取待审核的酒店列表
+ * 获取待审核的酒店列表 - 支持分页
  */
 exports.getPendingHotels = async (req, res) => {
   try {
-    const hotels = await Hotel.find({ 
-      reviewStatus: 'pending' 
-    })
-    .populate('merchantId', 'username email')
-    .sort({ createdAt: -1 });
+    const { page = 1, limit = 10 } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+    const skip = (pageNum - 1) * limitNum;
+
+    const [hotels, total] = await Promise.all([
+      Hotel.find({ reviewStatus: 'pending' })
+        .populate('merchantId', 'username email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Hotel.countDocuments({ reviewStatus: 'pending' })
+    ]);
 
     res.json({
       success: true,
       data: hotels,
-      total: hotels.length
+      total,
+      page: pageNum,
+      limit: limitNum
     });
   } catch (error) {
     console.error('获取待审核酒店列表失败:', error);

@@ -49,21 +49,27 @@ const HotelManagement = () => {
   const [discountModalVisible, setDiscountModalVisible] = useState(false);
   const [discountHotel, setDiscountHotel] = useState(null);
   const [discountForm] = Form.useForm();
+  const PAGE_SIZE = 10;
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   useEffect(() => {
-    fetchHotels();
+    fetchHotels(1);
   }, []);
 
-  const fetchHotels = async () => {
+  const fetchHotels = async (pageNum = 1) => {
     try {
       setLoading(true);
+      const limit = PAGE_SIZE;
       let response;
       if (user.role === 'admin') {
-        response = await adminAPI.getAllHotels();
+        response = await adminAPI.getAllHotels({ page: pageNum, limit });
       } else {
-        response = await hotelAPI.getMerchantHotels();
+        response = await hotelAPI.getMerchantHotels({ page: pageNum, limit });
       }
       setHotels(response.data || []);
+      setTotal(response.total ?? 0);
+      setPage(pageNum);
     } catch (error) {
       message.error('获取酒店列表失败');
     } finally {
@@ -132,7 +138,7 @@ const HotelManagement = () => {
     try {
       await hotelAPI.deleteHotel(id);
       message.success('删除成功');
-      fetchHotels();
+      fetchHotels(page);
     } catch (error) {
       message.error('删除失败');
     }
@@ -172,12 +178,15 @@ const HotelManagement = () => {
       if (editingHotel) {
         await hotelAPI.updateHotel(editingHotel._id, payload);
         message.success(user.role === 'merchant' ? '更新成功，请等待管理员重新审核' : '更新成功');
+        setModalVisible(false);
+        fetchHotels(page);
       } else {
         await hotelAPI.createHotel(payload);
         message.success('创建成功');
+        setModalVisible(false);
+        setPage(1);
+        fetchHotels(1);
       }
-      setModalVisible(false);
-      fetchHotels();
     } catch (error) {
       const errMsg = error?.message || (Array.isArray(error?.errors) ? error.errors.join('；') : '') || '操作失败';
       message.error(errMsg);
@@ -215,7 +224,7 @@ const HotelManagement = () => {
       }
       setReviewModalVisible(false);
       setReviewHotel(null);
-      fetchHotels();
+      fetchHotels(page);
     } catch (error) {
       message.error(error.message || '操作失败');
     }
@@ -258,7 +267,7 @@ const HotelManagement = () => {
       await hotelAPI.updateHotelRoomPrices(record._id, list.map((r) => ({ type: r.type, price: Number(r.price) })));
       message.success('价格已更新，无需重新审核');
       setRoomPricesEdit((prev) => ({ ...prev, [record._id]: undefined }));
-      fetchHotels();
+      fetchHotels(page);
     } catch (error) {
       message.error(error?.message || '保存失败');
     } finally {
@@ -296,12 +305,13 @@ const HotelManagement = () => {
         </Button>
       )
     },
-    { title: '星级', dataIndex: 'starRating', key: 'starRating', render: (star) => `${star}星` },
+    { title: '星级', dataIndex: 'starRating', key: 'starRating', width: 72, render: (star) => `${star}星` },
     { title: '地址', dataIndex: 'address', key: 'address', ellipsis: true },
     {
       title: '审核状态',
       dataIndex: 'reviewStatus',
       key: 'reviewStatus',
+      width: 90,
       render: (status) => {
         const colors = { pending: 'orange', approved: 'green', rejected: 'red' };
         const texts = { pending: '待审核', approved: '已通过', rejected: '已拒绝' };
@@ -312,6 +322,7 @@ const HotelManagement = () => {
       title: '发布状态',
       dataIndex: 'status',
       key: 'status',
+      width: 90,
       render: (status) => {
         const colors = { draft: 'default', published: 'success', unpublished: 'warning' };
         const texts = { draft: '草稿', published: '已发布', unpublished: '已下线' };
@@ -321,7 +332,23 @@ const HotelManagement = () => {
     {
       title: '操作',
       key: 'action',
+      width: 260,
       render: (_, record) => (
+        <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
+          <Space size={0.5} wrap>
+          <Button type="link" onClick={() => {
+            setDiscountHotel(record);
+            discountForm.setFieldsValue({
+              discounts: (record.discounts || []).map((d) => ({
+                type: d.type || 'general',
+                description: d.description || '',
+                percentage: d.percentage || 0,
+                validFrom: d.validFrom ? new Date(d.validFrom).toISOString().slice(0,10) : undefined,
+                validTo: d.validTo ? new Date(d.validTo).toISOString().slice(0,10) : undefined
+              }))
+            });
+            setDiscountModalVisible(true);
+          }}>设置折扣</Button>
         <Space size={0.5}>
           {user.role === 'merchant' && (
             <Button type="link" onClick={() => {
@@ -377,6 +404,7 @@ const HotelManagement = () => {
             </>
           )}
         </Space>
+        </div>
       )
     }
   ];
@@ -438,7 +466,14 @@ const HotelManagement = () => {
         dataSource={hotels}
         rowKey="_id"
         loading={loading}
-        pagination={false}
+        pagination={{
+          current: page,
+          pageSize: PAGE_SIZE,
+          total,
+          showSizeChanger: false,
+          showTotal: (t) => `共 ${t} 条`,
+          onChange: (p) => fetchHotels(p)
+        }}
         expandable={{
           expandedRowKeys,
           onExpand: handleExpandRow,
@@ -638,7 +673,7 @@ const HotelManagement = () => {
               message.success('折扣已更新');
               setDiscountModalVisible(false);
               setDiscountHotel(null);
-              fetchHotels();
+              fetchHotels(page);
             } catch (e) {
               message.error(e?.message || '更新失败');
             }

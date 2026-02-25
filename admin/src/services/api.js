@@ -79,7 +79,7 @@ export const authAPI = {
 export const hotelAPI = {
   getHotels: (params) => api.get('/hotels', { params }),
   getHotelById: (id) => api.get(`/hotels/${id}`),
-  getMerchantHotels: () => api.get('/hotels/merchant/my-hotels'),
+  getMerchantHotels: (params) => api.get('/hotels/merchant/my-hotels', { params }),
   createHotel: (data) => api.post('/hotels', data),
   updateHotel: (id, data) => api.put(`/hotels/${id}`, data),
   updateHotelRoomPrices: (id, rooms) => api.put(`/hotels/${id}/room-prices`, { rooms }),
@@ -108,7 +108,7 @@ export const uploadAPI = {
 // 管理员API
 export const adminAPI = {
   getAllHotels: (params) => api.get('/admin/hotels', { params }),
-  getPendingHotels: () => api.get('/admin/hotels/pending'),
+  getPendingHotels: (params) => api.get('/admin/hotels/pending', { params }),
   approveHotel: (id) => api.put(`/admin/hotels/${id}/approve`),
   rejectHotel: (id, reason) => api.put(`/admin/hotels/${id}/reject`, { reason }),
   publishHotel: (id) => api.put(`/admin/hotels/${id}/publish`),
