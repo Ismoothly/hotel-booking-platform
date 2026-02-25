@@ -359,6 +359,22 @@ const HotelManagement = () => {
             });
             setDiscountModalVisible(true);
           }}>设置折扣</Button>
+        <Space size={0.5}>
+          {user.role === 'merchant' && (
+            <Button type="link" onClick={() => {
+              setDiscountHotel(record);
+              discountForm.setFieldsValue({
+                discounts: (record.discounts || []).map((d) => ({
+                  type: d.type || 'general',
+                  description: d.description || '',
+                  percentage: d.percentage || 0,
+                  validFrom: d.validFrom ? new Date(d.validFrom).toISOString().slice(0,10) : undefined,
+                  validTo: d.validTo ? new Date(d.validTo).toISOString().slice(0,10) : undefined
+                }))
+              });
+              setDiscountModalVisible(true);
+            }}>设置折扣</Button>
+          )}
           {user.role === 'merchant' && (
             <>
               <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>编辑</Button>
@@ -370,6 +386,19 @@ const HotelManagement = () => {
           {user.role === 'admin' && (
             <>
               <Button type="link" icon={<EyeOutlined />} style={{ marginLeft: -12 }} onClick={() => { setDetailHotel(record); setDetailModalVisible(true); }}>详情</Button>
+              <Button type="link" onClick={() => {
+                setDiscountHotel(record);
+                discountForm.setFieldsValue({
+                  discounts: (record.discounts || []).map((d) => ({
+                    type: d.type || 'general',
+                    description: d.description || '',
+                    percentage: d.percentage || 0,
+                    validFrom: d.validFrom ? new Date(d.validFrom).toISOString().slice(0,10) : undefined,
+                    validTo: d.validTo ? new Date(d.validTo).toISOString().slice(0,10) : undefined
+                  }))
+                });
+                setDiscountModalVisible(true);
+              }}>查看折扣</Button>
               {record.reviewStatus === 'pending' && (
                 <>
                   <Button type="link" onClick={() => handleReview(record, 'approve')}>通过</Button>
@@ -699,10 +728,12 @@ const HotelManagement = () => {
       </Modal>
 
       <Modal
-        title="设置折扣"
+        title={user.role === 'admin' ? '查看折扣' : '设置折扣'}
         open={discountModalVisible}
         onCancel={() => { setDiscountModalVisible(false); setDiscountHotel(null); }}
-        onOk={() => discountForm.submit()}
+        onOk={user.role === 'admin' ? undefined : () => discountForm.submit()}
+        okButtonProps={user.role === 'admin' ? { style: { display: 'none' } } : {}}
+        cancelText={user.role === 'admin' ? '关闭' : '取消'}
         width={720}
         destroyOnClose
       >
@@ -737,7 +768,7 @@ const HotelManagement = () => {
                     <Row gutter={8}>
                       <Col span={6}>
                         <Form.Item {...rest} name={[name, 'type']} label="类型" rules={[{ required: true }]}>
-                          <Select placeholder="请选择">
+                          <Select placeholder="请选择" disabled={user.role === 'admin'}>
                             <Option value="general">通用</Option>
                             <Option value="promo">活动</Option>
                             <Option value="seasonal">季节</Option>
@@ -746,31 +777,40 @@ const HotelManagement = () => {
                       </Col>
                       <Col span={6}>
                         <Form.Item {...rest} name={[name, 'percentage']} label="折扣(%)" rules={[{ required: true }]}>
-                          <InputNumber min={0} max={100} style={{ width: '100%' }} addonAfter="%" />
+                          <InputNumber min={0} max={100} style={{ width: '100%' }} addonAfter="%" disabled={user.role === 'admin'} />
                         </Form.Item>
                       </Col>
                       <Col span={6}>
                         <Form.Item {...rest} name={[name, 'validFrom']} label="开始日期">
-                          <Input type="date" />
+                          <Input type="date" disabled={user.role === 'admin'} />
                         </Form.Item>
                       </Col>
                       <Col span={6}>
                         <Form.Item {...rest} name={[name, 'validTo']} label="结束日期">
-                          <Input type="date" />
+                          <Input type="date" disabled={user.role === 'admin'} />
                         </Form.Item>
                       </Col>
                     </Row>
                     <Form.Item name={[name, 'description']} label="描述">
-                      <Input placeholder="可选" />
+                      <Input placeholder="可选" disabled={user.role === 'admin'} />
                     </Form.Item>
-                    <Button type="text" danger onClick={() => remove(name)}>删除此折扣</Button>
+                    {user.role === 'merchant' && (
+                      <Button type="text" danger onClick={() => remove(name)}>删除此折扣</Button>
+                    )}
                   </Card>
                 ))}
-                <Form.Item>
-                  <Button type="dashed" onClick={() => add({ type: 'general', percentage: 0 })} block icon={<PlusOutlined />}>
-                    添加折扣
-                  </Button>
-                </Form.Item>
+                {user.role === 'merchant' && (
+                  <Form.Item>
+                    <Button type="dashed" onClick={() => add({ type: 'general', percentage: 0 })} block icon={<PlusOutlined />}>
+                      添加折扣
+                    </Button>
+                  </Form.Item>
+                )}
+                {user.role === 'admin' && fields.length === 0 && (
+                  <div style={{ color: '#999', textAlign: 'center', padding: '20px 0' }}>
+                    暂无折扣信息
+                  </div>
+                )}
               </>
             )}
           </Form.List>
