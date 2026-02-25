@@ -531,16 +531,28 @@ exports.deleteHotel = async (req, res) => {
 /**
  * 获取商户的酒店列表
  */
+/**
+ * 获取商户的酒店列表 - 支持分页
+ */
 exports.getMerchantHotels = async (req, res) => {
   try {
-    const hotels = await Hotel.find({
-      merchantId: req.user.id,
-    }).sort({ createdAt: -1 });
+    const { page = 1, limit = 10 } = req.query;
+    const pageNum = Math.max(1, parseInt(page, 10));
+    const limitNum = Math.min(100, Math.max(1, parseInt(limit, 10)));
+    const skip = (pageNum - 1) * limitNum;
+    const query = { merchantId: req.user.id };
+
+    const [hotels, total] = await Promise.all([
+      Hotel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
+      Hotel.countDocuments(query)
+    ]);
 
     res.json({
       success: true,
       data: hotels,
-      total: hotels.length,
+      total,
+      page: pageNum,
+      limit: limitNum
     });
   } catch (error) {
     console.error("获取商户酒店列表失败:", error);
