@@ -11,6 +11,7 @@ const hotelRoutes = require("./routes/hotels");
 const adminRoutes = require("./routes/admin");
 const cartRoutes = require("./routes/cart");
 const orderRoutes = require("./routes/orders");
+const sse = require("./sse");
 
 const app = express();
 
@@ -40,6 +41,9 @@ app.get("/health", (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
+// SSE：酒店价格实时推送（无需认证，供客户端 EventSource 使用）
+app.get("/api/events", sse.handleSSE);
 
 // API路由
 app.use("/api/auth", authRoutes);

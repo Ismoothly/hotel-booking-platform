@@ -13,6 +13,7 @@ import {
 import { hotelAPI } from '../services/api';
 import { formatPrice, getStarRating } from '../utils/helpers';
 import { useSearch } from '../contexts/SearchContext';
+import { usePriceUpdate } from '../contexts/PriceUpdateContext';
 import { useCart } from '../contexts/CartContext';
 import dayjs from 'dayjs';
 import './HotelDetail.css';
@@ -22,13 +23,20 @@ const HotelDetail = () => {
   const navigate = useNavigate();
   const { searchParams } = useSearch();
   const { addToCart } = useCart();
-  
+  const { updatedHotelIds, clearUpdatedHotelId } = usePriceUpdate();
+
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchHotelDetail();
   }, [id]);
+
+  useEffect(() => {
+    if (id && updatedHotelIds.includes(id)) {
+      fetchHotelDetail().finally(() => clearUpdatedHotelId(id));
+    }
+  }, [id, updatedHotelIds]);
 
   const fetchHotelDetail = async () => {
     try {

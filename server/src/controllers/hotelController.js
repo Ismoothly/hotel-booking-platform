@@ -364,6 +364,9 @@ exports.updateHotelRoomPrices = async (req, res) => {
 
     await hotel.save();
 
+    const { broadcastHotelPriceUpdate } = require("../sse");
+    broadcastHotelPriceUpdate(hotel._id.toString());
+
     res.json({
       success: true,
       message: "房型价格已更新",
@@ -449,6 +452,9 @@ exports.updateHotelDiscounts = async (req, res) => {
 
     hotel.discounts = normalized;
     await hotel.save();
+
+    const { broadcastHotelPriceUpdate } = require("../sse");
+    broadcastHotelPriceUpdate(hotel._id.toString());
 
     res.json({
       success: true,

@@ -11,6 +11,7 @@ import {
   Toast
 } from 'antd-mobile';
 import { useSearch } from '../contexts/SearchContext';
+import { usePriceUpdate } from '../contexts/PriceUpdateContext';
 import { hotelAPI } from '../services/api';
 import { formatPrice, getStarRating } from '../utils/helpers';
 import dayjs from 'dayjs';
@@ -19,6 +20,7 @@ import './HotelList.css';
 const HotelList = () => {
   const navigate = useNavigate();
   const { searchParams, updateSearchParams } = useSearch();
+  const { updatedHotelIds, clearAllUpdatedHotelIds } = usePriceUpdate();
   
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -48,6 +50,12 @@ const HotelList = () => {
   useEffect(() => {
     fetchHotels();
   }, [searchParams]);
+
+  useEffect(() => {
+    if (updatedHotelIds.length > 0) {
+      fetchHotels().finally(() => clearAllUpdatedHotelIds());
+    }
+  }, [updatedHotelIds]);
 
   const fetchHotels = async () => {
     try {
