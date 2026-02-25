@@ -404,6 +404,7 @@ const HotelManagement = () => {
             </>
           )}
         </Space>
+        </Space>
         </div>
       )
     }
