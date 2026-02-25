@@ -268,19 +268,28 @@ const HotelManagement = () => {
       title: '酒店名称',
       dataIndex: 'nameCn',
       key: 'nameCn',
+      ellipsis: true,
       render: (text, record) => (
         <Button
           type="link"
-          style={{ padding: 0, height: 'auto', fontWeight: 500 }}
+          style={{
+            padding: 0,
+            height: 'auto',
+            fontWeight: 500,
+            maxWidth: '100%',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center'
+          }}
           onClick={() => {
             const isExpanded = expandedRowKeys.includes(record._id);
             handleExpandRow(!isExpanded, record);
           }}
         >
-          {text}
-          <span style={{ marginLeft: 4, color: '#999' }}>
-            {expandedRowKeys.includes(record._id) ? '▼' : '▶'}
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+            {text}
           </span>
+          <span style={{ marginLeft: 4, color: '#999', flexShrink: 0 }}>{expandedRowKeys.includes(record._id) ? '▼' : '▶'}</span>
         </Button>
       )
     },
@@ -406,7 +415,9 @@ const HotelManagement = () => {
             const rooms = (roomPricesEdit[record._id] ?? record.rooms ?? []).map((r, i) => ({ ...r, _index: i }));
             return (
               <div style={{ padding: '12px 24px 12px 48px', background: '#fafafa' }}>
-                <div style={{ marginBottom: 8, fontWeight: 500 }}>房型与价格（仅修改价格无需重新审核）</div>
+                <div style={{ marginBottom: 8, fontWeight: 500 }}>
+                  {record.nameCn}{record.nameEn ? `（${record.nameEn}）` : ''} — 房型与价格（仅修改价格无需重新审核）
+                </div>
                 <Table
                   size="small"
                   pagination={false}
