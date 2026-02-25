@@ -1,44 +1,30 @@
-const express = require('express');
-const cors = require('cors');
-const bodyParser = require('body-parser');
-const cookieParser = require('cookie-parser');
-const config = require('./config');
-const { connectDB } = require('./config/database');
+const express = require("express");
+const cors = require("cors");
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
+const config = require("./config");
+const { connectDB } = require("./config/database");
 
 // 导入路由
-const path = require('path');
-const authRoutes = require('./routes/auth');
-const hotelRoutes = require('./routes/hotels');
-const adminRoutes = require('./routes/admin');
-const cartRoutes = require('./routes/cart');
-const orderRoutes = require('./routes/orders');
-const uploadRoutes = require('./routes/upload');
+const authRoutes = require("./routes/auth");
+const hotelRoutes = require("./routes/hotels");
+const adminRoutes = require("./routes/admin");
+const cartRoutes = require("./routes/cart");
+const orderRoutes = require("./routes/orders");
 
 const app = express();
 
 // 中间件
-app.use(cors({
-  origin: (origin, callback) => {
-    // 开发环境允许所有来源（真机调试）
-    if (config.env === 'development') {
-      callback(null, true);
-    } else {
-      // 生产环境检查白名单
-      const allowedOrigins = Array.isArray(config.corsOrigins) ? config.corsOrigins : [config.corsOrigins];
-      if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*')) {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    }
-  },
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: config.corsOrigins,
+    credentials: true,
+  }),
+);
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
-app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // 请求日志
 app.use((req, res, next) => {
@@ -47,38 +33,37 @@ app.use((req, res, next) => {
 });
 
 // 健康检查
-app.get('/health', (req, res) => {
+app.get("/health", (req, res) => {
   res.json({
     success: true,
-    message: 'Server is running',
-    timestamp: new Date().toISOString()
+    message: "Server is running",
+    timestamp: new Date().toISOString(),
   });
 });
 
 // API路由
-app.use('/api/auth', authRoutes);
-app.use('/api/hotels', hotelRoutes);
-app.use('/api/admin', adminRoutes);
-app.use('/api/cart', cartRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/upload', uploadRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/hotels", hotelRoutes);
+app.use("/api/admin", adminRoutes);
+app.use("/api/cart", cartRoutes);
+app.use("/api/orders", orderRoutes);
 
 // 404处理
 app.use((req, res) => {
   res.status(404).json({
     success: false,
-    message: '请求的资源不存在'
+    message: "请求的资源不存在",
   });
 });
 
 // 错误处理中间件
 app.use((err, req, res, next) => {
-  console.error('Error:', err);
-  
+  console.error("Error:", err);
+
   res.status(err.status || 500).json({
     success: false,
-    message: err.message || '服务器内部错误',
-    ...(config.env === 'development' && { stack: err.stack })
+    message: err.message || "服务器内部错误",
+    ...(config.env === "development" && { stack: err.stack }),
   });
 });
 
@@ -90,27 +75,27 @@ async function startServer() {
     // 连接到 MongoDB
     await connectDB();
 
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log('=================================');
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log("=================================");
       console.log(`Server is running on port ${PORT}`);
       console.log(`Environment: ${config.env}`);
       console.log(`API URL: http://0.0.0.0:${PORT}`);
-      console.log('=================================');
+      console.log("=================================");
     });
   } catch (err) {
-    console.error('服务器启动失败:', err.message);
+    console.error("服务器启动失败:", err.message);
     process.exit(1);
   }
 }
 
 // 处理进程中断信号
-process.on('SIGINT', async () => {
-  console.log('\n正在关闭服务器...');
+process.on("SIGINT", async () => {
+  console.log("\n正在关闭服务器...");
   try {
-    await require('./config/database').disconnectDB();
+    await require("./config/database").disconnectDB();
     process.exit(0);
   } catch (err) {
-    console.error('关闭时出错:', err);
+    console.error("关闭时出错:", err);
     process.exit(1);
   }
 });

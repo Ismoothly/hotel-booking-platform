@@ -210,7 +210,14 @@ export default function Cart() {
                 </div>
               </div>
               <div style={{ fontSize: 14, fontWeight: 'bold', color: '#1890ff' }}>
-                ¥{item.price}/晚
+                {item.originalPrice != null && item.originalPrice !== item.price ? (
+                  <>
+                    <span style={{ color: '#999', textDecoration: 'line-through', marginRight: 6 }}>¥{item.originalPrice}/晚</span>
+                    <span>¥{item.price}/晚</span>
+                  </>
+                ) : (
+                  <span>¥{item.price}/晚</span>
+                )}
               </div>
             </div>
 
@@ -239,6 +246,11 @@ export default function Cart() {
                 小计: <span style={{ fontWeight: 'bold', color: '#ff4d4f' }}>
                   ¥{item.subtotal.toFixed(2)}
                 </span>
+                {item.originalPrice != null && item.originalPrice > item.price && (
+                  <span style={{ marginLeft: 8, color: '#52c41a', fontSize: 12 }}>
+                    已优惠 ¥{((item.originalPrice - item.price) * item.nights * item.quantity).toFixed(2)}
+                  </span>
+                )}
               </div>
               <Button
                 size="small"
@@ -258,6 +270,17 @@ export default function Cart() {
           <div className="summary-item">
             <span>商品数量:</span>
             <span>{cartItems.length}个房间</span>
+          </div>
+          <Divider />
+          <div className="summary-item">
+            <span>已优惠:</span>
+            <span>
+              ¥{cartItems.reduce((sum, it) => {
+                const op = it.originalPrice != null ? it.originalPrice : it.price;
+                const d = Math.max(0, op - it.price) * it.nights * it.quantity;
+                return sum + d;
+              }, 0).toFixed(2)}
+            </span>
           </div>
           <Divider />
           <div className="summary-item total">

@@ -146,7 +146,7 @@ export default function Register() {
               onChange={(e) => setRole(roleOptions[e.detail.value as number].value)}
             >
               <View className='picker'>
-                {roleOptions.find((r) => r.value === role)?.label}
+                {(roleOptions.find((r) => r.value === role) || { label: '' }).label}
               </View>
             </Picker>
           </View>

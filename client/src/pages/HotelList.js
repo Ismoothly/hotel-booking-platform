@@ -81,7 +81,7 @@ const HotelList = () => {
 
   const getMinPrice = (rooms) => {
     if (!rooms || rooms.length === 0) return 0;
-    return Math.min(...rooms.map(room => room.price));
+    return Math.min(...rooms.map(room => (room.effectivePrice != null ? room.effectivePrice : room.price)));
   };
 
   const calculateNights = () => {
@@ -166,6 +166,11 @@ const HotelList = () => {
                         {formatPrice(getMinPrice(hotel.rooms))}
                       </span>
                       <span className="price-unit">/晚起</span>
+                      {hotel.activeDiscountPercent > 0 && (
+                        <span style={{ marginLeft: 8, color: '#f5222d', fontSize: 12 }}>
+                          {Math.round(hotel.activeDiscountPercent)}% off
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

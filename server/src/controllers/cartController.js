@@ -93,12 +93,29 @@ exports.addToCart = async (req, res) => {
 
     console.log('✓ [CART] 计算夜数:', nights);
 
-    // 添加到购物车
+    const now = Date.now();
+    let activePercent = 0;
+    if (Array.isArray(hotel.discounts) && hotel.discounts.length > 0) {
+      for (const d of hotel.discounts) {
+        const p = typeof d.percentage === 'number' ? d.percentage : 0;
+        const fromOk = !d.validFrom || new Date(d.validFrom).getTime() <= now;
+        const toOk = !d.validTo || new Date(d.validTo).getTime() >= now;
+        if (fromOk && toOk) {
+          if (p > activePercent) activePercent = p;
+        }
+      }
+    }
+    if (activePercent < 0) activePercent = 0;
+    if (activePercent > 100) activePercent = 100;
+    const discountedPrice = Math.round(room.price * (1 - activePercent / 100) * 100) / 100;
+
     const cart = await Cart.addItem(userId, {
       hotelId,
       hotelName: hotel.nameCn,
       roomType,
-      price: room.price,
+      price: discountedPrice,
+      originalPrice: room.price,
+      discountPercent: activePercent,
       quantity,
       checkInDate,
       checkOutDate,

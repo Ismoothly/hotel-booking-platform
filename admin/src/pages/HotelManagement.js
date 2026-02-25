@@ -43,6 +43,12 @@ const HotelManagement = () => {
   const [form] = Form.useForm();
   const [reviewForm] = Form.useForm();
   const [imageList, setImageList] = useState([]);
+  const [expandedRowKeys, setExpandedRowKeys] = useState([]);
+  const [roomPricesEdit, setRoomPricesEdit] = useState({});
+  const [savingPricesHotelId, setSavingPricesHotelId] = useState(null);
+  const [discountModalVisible, setDiscountModalVisible] = useState(false);
+  const [discountHotel, setDiscountHotel] = useState(null);
+  const [discountForm] = Form.useForm();
 
   useEffect(() => {
     fetchHotels();
@@ -215,8 +221,81 @@ const HotelManagement = () => {
     }
   };
 
+  const handleExpandRow = (expanded, record) => {
+    const next = expanded
+      ? [...expandedRowKeys, record._id]
+      : expandedRowKeys.filter((k) => k !== record._id);
+    setExpandedRowKeys(next);
+    if (expanded && record.rooms?.length) {
+      setRoomPricesEdit((prev) => ({
+        ...prev,
+        [record._id]: record.rooms.map((r) => ({
+          type: r.type,
+          price: r.price,
+          quantity: r.quantity ?? 1,
+          description: r.description || ''
+        }))
+      }));
+    }
+  };
+
+  const handleRoomPriceChange = (hotelId, index, value) => {
+    setRoomPricesEdit((prev) => {
+      const list = [...(prev[hotelId] || [])];
+      if (list[index]) list[index] = { ...list[index], price: value };
+      return { ...prev, [hotelId]: list };
+    });
+  };
+
+  const handleSaveRoomPrices = async (record) => {
+    const list = roomPricesEdit[record._id] || record.rooms || [];
+    if (!list.length) {
+      message.warning('暂无房型');
+      return;
+    }
+    try {
+      setSavingPricesHotelId(record._id);
+      await hotelAPI.updateHotelRoomPrices(record._id, list.map((r) => ({ type: r.type, price: Number(r.price) })));
+      message.success('价格已更新，无需重新审核');
+      setRoomPricesEdit((prev) => ({ ...prev, [record._id]: undefined }));
+      fetchHotels();
+    } catch (error) {
+      message.error(error?.message || '保存失败');
+    } finally {
+      setSavingPricesHotelId(null);
+    }
+  };
+
   const columns = [
-    { title: '酒店名称', dataIndex: 'nameCn', key: 'nameCn' },
+    {
+      title: '酒店名称',
+      dataIndex: 'nameCn',
+      key: 'nameCn',
+      ellipsis: true,
+      render: (text, record) => (
+        <Button
+          type="link"
+          style={{
+            padding: 0,
+            height: 'auto',
+            fontWeight: 500,
+            maxWidth: '100%',
+            overflow: 'hidden',
+            display: 'flex',
+            alignItems: 'center'
+          }}
+          onClick={() => {
+            const isExpanded = expandedRowKeys.includes(record._id);
+            handleExpandRow(!isExpanded, record);
+          }}
+        >
+          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1, minWidth: 0 }}>
+            {text}
+          </span>
+          <span style={{ marginLeft: 4, color: '#999', flexShrink: 0 }}>{expandedRowKeys.includes(record._id) ? '▼' : '▶'}</span>
+        </Button>
+      )
+    },
     { title: '星级', dataIndex: 'starRating', key: 'starRating', render: (star) => `${star}星` },
     { title: '地址', dataIndex: 'address', key: 'address', ellipsis: true },
     {
@@ -244,6 +323,19 @@ const HotelManagement = () => {
       key: 'action',
       render: (_, record) => (
         <Space size={0.5}>
+          <Button type="link" onClick={() => {
+            setDiscountHotel(record);
+            discountForm.setFieldsValue({
+              discounts: (record.discounts || []).map((d) => ({
+                type: d.type || 'general',
+                description: d.description || '',
+                percentage: d.percentage || 0,
+                validFrom: d.validFrom ? new Date(d.validFrom).toISOString().slice(0,10) : undefined,
+                validTo: d.validTo ? new Date(d.validTo).toISOString().slice(0,10) : undefined
+              }))
+            });
+            setDiscountModalVisible(true);
+          }}>设置折扣</Button>
           {user.role === 'merchant' && (
             <>
               <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>编辑</Button>
@@ -331,6 +423,57 @@ const HotelManagement = () => {
         dataSource={hotels}
         rowKey="_id"
         loading={loading}
+        pagination={false}
+        expandable={{
+          expandedRowKeys,
+          onExpand: handleExpandRow,
+          expandedRowRender: (record) => {
+            const rooms = (roomPricesEdit[record._id] ?? record.rooms ?? []).map((r, i) => ({ ...r, _index: i }));
+            return (
+              <div style={{ padding: '12px 24px 12px 48px', background: '#fafafa' }}>
+                <div style={{ marginBottom: 8, fontWeight: 500 }}>
+                  {record.nameCn}{record.nameEn ? `（${record.nameEn}）` : ''} — 房型与价格（仅修改价格无需重新审核）
+                </div>
+                <Table
+                  size="small"
+                  pagination={false}
+                  dataSource={rooms}
+                  rowKey={(r) => `${record._id}-${r._index}-${r.type}`}
+                  columns={[
+                    { title: '类型', dataIndex: 'type', key: 'type', width: 120 },
+                    {
+                      title: '价格（元）',
+                      key: 'price',
+                      width: 160,
+                      render: (_, row) => (
+                        <InputNumber
+                          min={0}
+                          value={row.price}
+                          onChange={(v) => handleRoomPriceChange(record._id, row._index, v)}
+                          addonAfter="元"
+                          style={{ width: '100%' }}
+                        />
+                      )
+                    },
+                    { title: '数量', dataIndex: 'quantity', key: 'quantity', width: 80, render: (v) => v ?? '-' },
+                    { title: '描述', dataIndex: 'description', key: 'description', ellipsis: true, render: (v) => v || '-' }
+                  ]}
+                />
+                <div style={{ marginTop: 12, display: 'flex', justifyContent: 'flex-end' }}>
+                  <Button
+                    type="primary"
+                    size="small"
+                    loading={savingPricesHotelId === record._id}
+                    onClick={() => handleSaveRoomPrices(record)}
+                  >
+                    保存价格
+                  </Button>
+                </div>
+              </div>
+            );
+          },
+          rowExpandable: (record) => (record.rooms && record.rooms.length > 0)
+        }}
       />
 
       <Modal
@@ -450,6 +593,85 @@ const HotelManagement = () => {
           <Form.Item name="nearbyShopping" label="购物">
             <TextArea rows={2} placeholder="周边商场、购物信息" />
           </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="设置折扣"
+        open={discountModalVisible}
+        onCancel={() => { setDiscountModalVisible(false); setDiscountHotel(null); }}
+        onOk={() => discountForm.submit()}
+        width={720}
+        destroyOnClose
+      >
+        <Form
+          layout="vertical"
+          form={discountForm}
+          initialValues={{ discounts: [] }}
+          onFinish={async (values) => {
+            try {
+              const discounts = (values.discounts || []).map((d) => ({
+                type: d.type || 'general',
+                description: d.description || '',
+                percentage: Number(d.percentage || 0),
+                validFrom: d.validFrom || undefined,
+                validTo: d.validTo || undefined
+              }));
+              await hotelAPI.updateHotelDiscounts(discountHotel._id, discounts);
+              message.success('折扣已更新');
+              setDiscountModalVisible(false);
+              setDiscountHotel(null);
+              fetchHotels();
+            } catch (e) {
+              message.error(e?.message || '更新失败');
+            }
+          }}
+        >
+          <Form.List name="discounts">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...rest }) => (
+                  <Card size="small" key={key} style={{ marginBottom: 8 }}>
+                    <Row gutter={8}>
+                      <Col span={6}>
+                        <Form.Item {...rest} name={[name, 'type']} label="类型" rules={[{ required: true }]}>
+                          <Select placeholder="请选择">
+                            <Option value="general">通用</Option>
+                            <Option value="promo">活动</Option>
+                            <Option value="seasonal">季节</Option>
+                          </Select>
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item {...rest} name={[name, 'percentage']} label="折扣(%)" rules={[{ required: true }]}>
+                          <InputNumber min={0} max={100} style={{ width: '100%' }} addonAfter="%" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item {...rest} name={[name, 'validFrom']} label="开始日期">
+                          <Input type="date" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item {...rest} name={[name, 'validTo']} label="结束日期">
+                          <Input type="date" />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    <Form.Item name={[name, 'description']} label="描述">
+                      <Input placeholder="可选" />
+                    </Form.Item>
+                    <Button type="text" danger onClick={() => remove(name)}>删除此折扣</Button>
+                  </Card>
+                ))}
+                <Form.Item>
+                  <Button type="dashed" onClick={() => add({ type: 'general', percentage: 0 })} block icon={<PlusOutlined />}>
+                    添加折扣
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
         </Form>
       </Modal>
 

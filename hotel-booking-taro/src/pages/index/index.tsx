@@ -21,7 +21,8 @@ interface Hotel {
   address: string;
   city?: string;
   images?: string[];
-  rooms?: Array<{ type: string; price: number }>;
+  rooms?: Array<{ type: string; price: number; effectivePrice?: number }>;
+  activeDiscountPercent?: number;
 }
 
 const CITIES = [
@@ -304,9 +305,28 @@ export default function Index() {
     });
   };
 
-  const getMinPrice = (rooms?: Array<{ price: number }>) => {
+  const getMinPrice = (
+    rooms?: Array<{ price: number; effectivePrice?: number }>,
+  ) => {
+    if (!rooms || rooms.length === 0) return 0;
+    return Math.min(
+      ...rooms.map((r) =>
+        r.effectivePrice != null ? r.effectivePrice : r.price,
+      ),
+    );
+  };
+
+  const getMinOriginalPrice = (
+    rooms?: Array<{ price: number; effectivePrice?: number }>,
+  ) => {
     if (!rooms || rooms.length === 0) return 0;
     return Math.min(...rooms.map((r) => r.price));
+  };
+
+  const formatZhe = (percentOff?: number) => {
+    if (!percentOff || percentOff <= 0) return "";
+    const zheStr = ((100 - Math.round(percentOff)) / 10).toFixed(1);
+    return zheStr.endsWith(".0") ? `${zheStr.slice(0, -2)}折` : `${zheStr}折`;
   };
 
   const calculateNights = () => {
@@ -374,24 +394,24 @@ export default function Index() {
               <Image src={ICONS.chevronDown} className="w-3 h-3 ml-1" />
             </View>
           </Picker>
-          <View 
+          <View
             className="flex items-center justify-center w-8 h-8 bg-primary rounded-lg active:opacity-80"
             onClick={handleGetLocation}
           >
-            <Image 
-              src="https://img.icons8.com/ios-filled/50/FFFFFF/worldwide-location.png" 
-              className="w-5 h-5" 
+            <Image
+              src="https://img.icons8.com/ios-filled/50/FFFFFF/worldwide-location.png"
+              className="w-5 h-5"
             />
           </View>
         </View>
 
         <View className="mb-2 h-8 relative flex items-center">
           <View className="absolute left-3 top-1/2 -translate-y-1/2">
-            <Image src={ICONS.search} className="w-4 h-4 translate-y-2" />
+            <Image src={ICONS.search} className="w-4 h-4 translate-y-1" />
           </View>
           <Input
-            className="w-full h-8 leading-8 pl-10 pr-4 pt-4 bg-white rounded-xl text-28px box-border placeholder-grayCCC border border-solid border-border"
-            style={{ lineHeight: "32px" }}
+            className="w-full h-8 leading-8 pl-10 pr-4 bg-white rounded-xl text-28px box-border placeholder-grayCCC border border-solid border-border"
+            style={{ lineHeight: "3.2px" }}
             type="text"
             value={searchValue}
             onInput={(e) => handleSearch(e.detail.value)}
@@ -444,8 +464,8 @@ export default function Index() {
             className="flex items-center justify-center gap-2 flex-1 bg-primary text-white border border-solid border-primary rounded-xl h-8 leading-8 px-4 text-28px font-bold shadow-primary"
             onClick={() => fetchHotels()}
           >
-            <Image src={ICONS.searchWhite} className="w-4 h-4 translate-y-2" />
-            <Text className="inline-block relative top-1">搜索</Text>
+            <Image src={ICONS.searchWhite} className="w-4 h-4" />
+            <Text className="inline-block relative">搜索</Text>
           </View>
         </View>
 
@@ -508,7 +528,7 @@ export default function Index() {
           {QUICK_TAGS.map((tag, index) => (
             <View
               key={index}
-              className={`px-4 py-2 rounded-full text-base shadow-card whitespace-nowrap ${searchValue === tag ? "bg-primary text-white" : "bg-white text-text2"}`}
+              className={`px-4 h-8 flex items-center justify-center rounded-full text-base shadow-card whitespace-nowrap ${searchValue === tag ? "bg-primary text-white" : "bg-white text-text2"}`}
               onClick={() => handleTagClick(tag)}
             >
               {tag}
@@ -566,7 +586,18 @@ export default function Index() {
                       <Text className="text-accent font-bold text-28px">
                         ¥{getMinPrice(hotel.rooms)}
                       </Text>
-                      <Text className="text-xs text-text3 ml-1">/晚</Text>
+                      <Text className="text-xs text-text3 ml-1">起</Text>
+                      {getMinOriginalPrice(hotel.rooms) >
+                        getMinPrice(hotel.rooms) && (
+                        <Text className="text-xs text-text3 ml-2 line-through">
+                          ¥{getMinOriginalPrice(hotel.rooms)}
+                        </Text>
+                      )}
+                      {hotel.activeDiscountPercent > 0 && (
+                        <Text className="text-xs text-red-500 ml-2">
+                          {formatZhe(hotel.activeDiscountPercent)}
+                        </Text>
+                      )}
                     </View>
                     <View className="text-xs text-text3">{hotel.address}</View>
                   </View>

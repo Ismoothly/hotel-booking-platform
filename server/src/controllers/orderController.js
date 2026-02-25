@@ -131,10 +131,21 @@ exports.createOrder = async (req, res) => {
       }
     }
 
-    // 创建订单
+    let originalTotalPrice = 0;
+    for (const item of cart.items) {
+      const op = item.originalPrice != null ? item.originalPrice : item.price;
+      originalTotalPrice += op * item.quantity * item.nights;
+    }
+    originalTotalPrice = Math.round(originalTotalPrice * 100) / 100;
+    const totalPrice = Math.round(cart.total * 100) / 100;
+    let discountAmount = originalTotalPrice - totalPrice;
+    if (discountAmount < 0) discountAmount = 0;
+
     const order = await Order.createOrder(userId, {
       items: cart.items,
-      totalPrice: cart.total,
+      totalPrice: totalPrice,
+      originalTotalPrice,
+      discountAmount,
       guestName,
       guestPhone,
       guestEmail,
