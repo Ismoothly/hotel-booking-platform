@@ -9,6 +9,8 @@ interface CartItem {
   hotelName: string
   roomType: string
   price: number
+  originalPrice?: number
+  discountPercent?: number
   quantity: number
   checkInDate: string
   checkOutDate: string
@@ -177,7 +179,16 @@ export default function Cart() {
                 <Text className='hotel-name'>{item.hotelName}</Text>
                 <Text className='room-type'>{item.roomType}</Text>
               </View>
-              <Text className='price'>¥{item.price}/晚</Text>
+              <Text className='price'>
+                {item.originalPrice != null && item.originalPrice !== item.price ? (
+                  <>
+                    <Text style='text-decoration:line-through;color:#999;margin-right:6rpx'>¥{item.originalPrice}/晚</Text>
+                    <Text>¥{item.price}/晚</Text>
+                  </>
+                ) : (
+                  <>¥{item.price}/晚</>
+                )}
+              </Text>
             </View>
 
             <View className='item-details'>
@@ -198,6 +209,11 @@ export default function Cart() {
             <View className='item-footer'>
               <View className='subtotal'>
                 小计: <Text className='amount'>¥{item.subtotal.toFixed(2)}</Text>
+                {item.originalPrice != null && item.originalPrice > item.price && (
+                  <Text className='ml-2 text-green-600 text-xs'>
+                    已优惠 ¥{((item.originalPrice - item.price) * item.nights * item.quantity).toFixed(2)}
+                  </Text>
+                )}
               </View>
               <View className='item-actions'>
                 <View className='quantity-control'>

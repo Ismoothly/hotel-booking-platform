@@ -46,6 +46,9 @@ const HotelManagement = () => {
   const [expandedRowKeys, setExpandedRowKeys] = useState([]);
   const [roomPricesEdit, setRoomPricesEdit] = useState({});
   const [savingPricesHotelId, setSavingPricesHotelId] = useState(null);
+  const [discountModalVisible, setDiscountModalVisible] = useState(false);
+  const [discountHotel, setDiscountHotel] = useState(null);
+  const [discountForm] = Form.useForm();
 
   useEffect(() => {
     fetchHotels();
@@ -320,6 +323,19 @@ const HotelManagement = () => {
       key: 'action',
       render: (_, record) => (
         <Space size={0.5}>
+          <Button type="link" onClick={() => {
+            setDiscountHotel(record);
+            discountForm.setFieldsValue({
+              discounts: (record.discounts || []).map((d) => ({
+                type: d.type || 'general',
+                description: d.description || '',
+                percentage: d.percentage || 0,
+                validFrom: d.validFrom ? new Date(d.validFrom).toISOString().slice(0,10) : undefined,
+                validTo: d.validTo ? new Date(d.validTo).toISOString().slice(0,10) : undefined
+              }))
+            });
+            setDiscountModalVisible(true);
+          }}>设置折扣</Button>
           {user.role === 'merchant' && (
             <>
               <Button type="link" icon={<EditOutlined />} onClick={() => handleEdit(record)}>编辑</Button>
@@ -577,6 +593,85 @@ const HotelManagement = () => {
           <Form.Item name="nearbyShopping" label="购物">
             <TextArea rows={2} placeholder="周边商场、购物信息" />
           </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="设置折扣"
+        open={discountModalVisible}
+        onCancel={() => { setDiscountModalVisible(false); setDiscountHotel(null); }}
+        onOk={() => discountForm.submit()}
+        width={720}
+        destroyOnClose
+      >
+        <Form
+          layout="vertical"
+          form={discountForm}
+          initialValues={{ discounts: [] }}
+          onFinish={async (values) => {
+            try {
+              const discounts = (values.discounts || []).map((d) => ({
+                type: d.type || 'general',
+                description: d.description || '',
+                percentage: Number(d.percentage || 0),
+                validFrom: d.validFrom || undefined,
+                validTo: d.validTo || undefined
+              }));
+              await hotelAPI.updateHotelDiscounts(discountHotel._id, discounts);
+              message.success('折扣已更新');
+              setDiscountModalVisible(false);
+              setDiscountHotel(null);
+              fetchHotels();
+            } catch (e) {
+              message.error(e?.message || '更新失败');
+            }
+          }}
+        >
+          <Form.List name="discounts">
+            {(fields, { add, remove }) => (
+              <>
+                {fields.map(({ key, name, ...rest }) => (
+                  <Card size="small" key={key} style={{ marginBottom: 8 }}>
+                    <Row gutter={8}>
+                      <Col span={6}>
+                        <Form.Item {...rest} name={[name, 'type']} label="类型" rules={[{ required: true }]}>
+                          <Select placeholder="请选择">
+                            <Option value="general">通用</Option>
+                            <Option value="promo">活动</Option>
+                            <Option value="seasonal">季节</Option>
+                          </Select>
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item {...rest} name={[name, 'percentage']} label="折扣(%)" rules={[{ required: true }]}>
+                          <InputNumber min={0} max={100} style={{ width: '100%' }} addonAfter="%" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item {...rest} name={[name, 'validFrom']} label="开始日期">
+                          <Input type="date" />
+                        </Form.Item>
+                      </Col>
+                      <Col span={6}>
+                        <Form.Item {...rest} name={[name, 'validTo']} label="结束日期">
+                          <Input type="date" />
+                        </Form.Item>
+                      </Col>
+                    </Row>
+                    <Form.Item name={[name, 'description']} label="描述">
+                      <Input placeholder="可选" />
+                    </Form.Item>
+                    <Button type="text" danger onClick={() => remove(name)}>删除此折扣</Button>
+                  </Card>
+                ))}
+                <Form.Item>
+                  <Button type="dashed" onClick={() => add({ type: 'general', percentage: 0 })} block icon={<PlusOutlined />}>
+                    添加折扣
+                  </Button>
+                </Form.Item>
+              </>
+            )}
+          </Form.List>
         </Form>
       </Modal>
 

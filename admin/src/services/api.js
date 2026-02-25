@@ -83,6 +83,7 @@ export const hotelAPI = {
   createHotel: (data) => api.post('/hotels', data),
   updateHotel: (id, data) => api.put(`/hotels/${id}`, data),
   updateHotelRoomPrices: (id, rooms) => api.put(`/hotels/${id}/room-prices`, { rooms }),
+  updateHotelDiscounts: (id, discounts) => api.put(`/hotels/${id}/discounts`, { discounts }),
   deleteHotel: (id) => api.delete(`/hotels/${id}`)
 };
 

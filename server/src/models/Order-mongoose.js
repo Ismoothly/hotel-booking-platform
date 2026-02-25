@@ -1,47 +1,57 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
 /**
  * 订单项 Schema
  */
-const orderItemSchema = new mongoose.Schema({
-  hotelId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Hotel',
-    required: true
+const orderItemSchema = new mongoose.Schema(
+  {
+    hotelId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Hotel",
+      required: true,
+    },
+    hotelName: {
+      type: String,
+      required: true,
+    },
+    roomType: {
+      type: String,
+      required: true,
+    },
+    price: {
+      type: Number,
+      required: true,
+    },
+    originalPrice: {
+      type: Number,
+    },
+    discountPercent: {
+      type: Number,
+      default: 0,
+    },
+    quantity: {
+      type: Number,
+      required: true,
+    },
+    checkInDate: {
+      type: Date,
+      required: true,
+    },
+    checkOutDate: {
+      type: Date,
+      required: true,
+    },
+    nights: {
+      type: Number,
+      required: true,
+    },
+    subtotal: {
+      type: Number,
+      required: true,
+    },
   },
-  hotelName: {
-    type: String,
-    required: true
-  },
-  roomType: {
-    type: String,
-    required: true
-  },
-  price: {
-    type: Number,
-    required: true
-  },
-  quantity: {
-    type: Number,
-    required: true
-  },
-  checkInDate: {
-    type: Date,
-    required: true
-  },
-  checkOutDate: {
-    type: Date,
-    required: true
-  },
-  nights: {
-    type: Number,
-    required: true
-  },
-  subtotal: {
-    type: Number,
-    required: true
-  }
-}, { _id: false });
+  { _id: false },
+);
 
 /**
  * 订单 Schema 定义
@@ -50,87 +60,95 @@ const orderSchema = new mongoose.Schema({
   orderId: {
     type: String,
     unique: true,
-    index: true
+    index: true,
   },
   userId: {
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: [true, '用户ID是必需的'],
-    index: true
+    ref: "User",
+    required: [true, "用户ID是必需的"],
+    index: true,
   },
   items: [orderItemSchema],
   totalPrice: {
     type: Number,
-    required: [true, '总价是必需的'],
-    min: [0, '总价不能为负数']
+    required: [true, "总价是必需的"],
+    min: [0, "总价不能为负数"],
+  },
+  originalTotalPrice: {
+    type: Number,
+    default: 0,
+  },
+  discountAmount: {
+    type: Number,
+    default: 0,
   },
   status: {
     type: String,
     enum: {
-      values: ['pending', 'confirmed', 'paid', 'cancelled'],
-      message: '订单状态只能是: pending, confirmed, paid, cancelled'
+      values: ["pending", "confirmed", "paid", "cancelled"],
+      message: "订单状态只能是: pending, confirmed, paid, cancelled",
     },
-    default: 'pending',
-    index: true
+    default: "pending",
+    index: true,
   },
   paymentMethod: {
     type: String,
     enum: {
-      values: ['alipay', 'wechat', 'card'],
-      message: '支付方式只能是: alipay, wechat, card'
+      values: ["alipay", "wechat", "card"],
+      message: "支付方式只能是: alipay, wechat, card",
     },
-    default: 'alipay'
+    default: "alipay",
   },
   paymentStatus: {
     type: String,
     enum: {
-      values: ['unpaid', 'paid', 'failed'],
-      message: '支付状态只能是: unpaid, paid, failed'
+      values: ["unpaid", "paid", "failed"],
+      message: "支付状态只能是: unpaid, paid, failed",
     },
-    default: 'unpaid'
+    default: "unpaid",
   },
   guestName: {
     type: String,
-    required: [true, '客人姓名是必需的']
+    required: [true, "客人姓名是必需的"],
   },
   guestPhone: {
     type: String,
-    required: [true, '客人电话是必需的']
+    required: [true, "客人电话是必需的"],
   },
   guestEmail: {
-    type: String
+    type: String,
   },
   notes: {
     type: String,
-    maxlength: 500
+    maxlength: 500,
   },
   cancelReason: {
-    type: String
+    type: String,
   },
   cancelledAt: {
-    type: Date
+    type: Date,
   },
   confirmedAt: {
-    type: Date
+    type: Date,
   },
   paidAt: {
-    type: Date
+    type: Date,
   },
   createdAt: {
     type: Date,
     default: Date.now,
-    index: true
+    index: true,
   },
   updatedAt: {
     type: Date,
-    default: Date.now
-  }
+    default: Date.now,
+  },
 });
 
 /**
  * 生成订单ID (格式: ORD-TIMESTAMP-RANDOM)
  */
-orderSchema.pre('save', async function(next) {
+orderSchema.pre("save", async function (next) {
   if (!this.orderId) {
     const timestamp = Date.now();
     const random = Math.floor(Math.random() * 10000);
@@ -143,7 +161,7 @@ orderSchema.pre('save', async function(next) {
 /**
  * 获取订单列表
  */
-orderSchema.statics.getOrders = async function(userId, filters = {}) {
+orderSchema.statics.getOrders = async function (userId, filters = {}) {
   const query = { userId };
 
   if (filters.status) {
@@ -155,15 +173,15 @@ orderSchema.statics.getOrders = async function(userId, filters = {}) {
 
   return this.find(query)
     .sort({ createdAt: -1 })
-    .populate('userId', 'name email')
-    .populate('items.hotelId', 'name city');
+    .populate("userId", "name email")
+    .populate("items.hotelId", "name city");
 };
 
 /**
  * 确认订单
  */
-orderSchema.methods.confirm = function() {
-  this.status = 'confirmed';
+orderSchema.methods.confirm = function () {
+  this.status = "confirmed";
   this.confirmedAt = new Date();
   this.updatedAt = new Date();
   return this.save();
@@ -172,9 +190,9 @@ orderSchema.methods.confirm = function() {
 /**
  * 标记为已支付
  */
-orderSchema.methods.markAsPaid = function() {
-  this.status = 'paid';
-  this.paymentStatus = 'paid';
+orderSchema.methods.markAsPaid = function () {
+  this.status = "paid";
+  this.paymentStatus = "paid";
   this.paidAt = new Date();
   this.updatedAt = new Date();
   return this.save();
@@ -183,11 +201,11 @@ orderSchema.methods.markAsPaid = function() {
 /**
  * 取消订单
  */
-orderSchema.methods.cancel = function(reason = '') {
-  if (this.status === 'paid' || this.status === 'confirmed') {
-    throw new Error('已确认或已支付的订单无法取消');
+orderSchema.methods.cancel = function (reason = "") {
+  if (this.status === "paid" || this.status === "confirmed") {
+    throw new Error("已确认或已支付的订单无法取消");
   }
-  this.status = 'cancelled';
+  this.status = "cancelled";
   this.cancelReason = reason;
   this.cancelledAt = new Date();
   this.updatedAt = new Date();
@@ -197,20 +215,32 @@ orderSchema.methods.cancel = function(reason = '') {
 /**
  * 创建订单
  */
-orderSchema.statics.createOrder = async function(userId, orderData) {
-  const { items, totalPrice, guestName, guestPhone, guestEmail, notes, paymentMethod } = orderData;
-
-  const order = new this({
-    userId,
+orderSchema.statics.createOrder = async function (userId, orderData) {
+  const {
     items,
     totalPrice,
+    originalTotalPrice,
+    discountAmount,
     guestName,
     guestPhone,
     guestEmail,
     notes,
     paymentMethod,
-    status: 'pending',
-    paymentStatus: 'unpaid'
+  } = orderData;
+
+  const order = new this({
+    userId,
+    items,
+    totalPrice,
+    originalTotalPrice: originalTotalPrice != null ? originalTotalPrice : 0,
+    discountAmount: discountAmount != null ? discountAmount : 0,
+    guestName,
+    guestPhone,
+    guestEmail,
+    notes,
+    paymentMethod,
+    status: "pending",
+    paymentStatus: "unpaid",
   });
 
   return order.save();
@@ -222,6 +252,6 @@ orderSchema.index({ orderId: 1 });
 orderSchema.index({ status: 1 });
 
 // 创建模型
-const Order = mongoose.model('Order', orderSchema);
+const Order = mongoose.model("Order", orderSchema);
 
 module.exports = Order;

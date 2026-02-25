@@ -77,7 +77,9 @@ const HotelDetail = () => {
         hotelId: hotel._id,
         hotelName: hotel.nameCn,
         roomType: room.type,
-        price: room.price,
+        price: room.effectivePrice != null ? room.effectivePrice : room.price,
+        originalPrice: room.price,
+        discountPercent: hotel.activeDiscountPercent || 0,
         quantity: 1,
         checkInDate: searchParams.checkIn,
         checkOutDate: searchParams.checkOut,
@@ -235,8 +237,18 @@ const HotelDetail = () => {
               <div className="room-description">{room.description}</div>
               <div className="room-bottom">
                 <div className="room-price">
-                  <span className="price-value">{formatPrice(room.price)}</span>
-                  <span className="price-unit">/晚</span>
+                  {room.effectivePrice != null && room.effectivePrice !== room.price ? (
+                    <>
+                      <span style={{ color: '#999', textDecoration: 'line-through', marginRight: 8 }}>{formatPrice(room.price)}</span>
+                      <span className="price-value">{formatPrice(room.effectivePrice)}</span>
+                      <span className="price-unit">/晚</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="price-value">{formatPrice(room.price)}</span>
+                      <span className="price-unit">/晚</span>
+                    </>
+                  )}
                 </div>
                 <Button
                   color="primary"
