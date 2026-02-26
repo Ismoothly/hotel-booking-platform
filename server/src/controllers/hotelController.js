@@ -40,9 +40,19 @@ exports.getHotels = async (req, res) => {
       query.$text = { $search: keyword };
     }
 
-    // 设施筛选
+    // 设施筛选（支持多选，用逗号分隔）
     if (facilities) {
-      query.facilities = { $in: [facilities] };
+      let facArr = facilities;
+      if (typeof facilities === "string") {
+        facArr = facilities
+          .split(",")
+          .map((s) => s.trim())
+          .filter((s) => s);
+      }
+      if (Array.isArray(facArr) && facArr.length > 0) {
+        // 使用 $all 确保酒店必须包含所有选中的设施
+        query.facilities = { $all: facArr };
+      }
     }
 
     // 执行查询
@@ -541,15 +551,21 @@ exports.getMerchantHotels = async (req, res) => {
     const query = { merchantId: req.user.id };
 
     if (city && String(city).trim()) {
-      const cityStr = String(city).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const cityStr = String(city)
+        .trim()
+        .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       query.city = new RegExp(`^${cityStr}`);
     }
     if (reviewStatus) query.reviewStatus = reviewStatus;
     if (status) query.status = status;
 
     const [hotels, total] = await Promise.all([
-      Hotel.find(query).sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
-      Hotel.countDocuments(query)
+      Hotel.find(query)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limitNum)
+        .lean(),
+      Hotel.countDocuments(query),
     ]);
 
     res.json({
@@ -557,7 +573,7 @@ exports.getMerchantHotels = async (req, res) => {
       data: hotels,
       total,
       page: pageNum,
-      limit: limitNum
+      limit: limitNum,
     });
   } catch (error) {
     console.error("获取商户酒店列表失败:", error);

@@ -4,6 +4,13 @@
 
 智慧出行酒店预订平台是一个面向现代旅游出行场景的综合服务体系，旨在为酒店商家与终端消费者之间搭建高效、便捷的信息交互桥梁。
 
+### ✨ 核心亮点
+- 🏨 **完整业务流程**：酒店查询 → 购物车 → 订单结算 → 支付管理
+- 🔒 **企业级安全**：JWT 双 Token 认证 + 并发控制 + 超卖防护
+- 📱 **多端支持**：移动端 H5 + PC 管理端 + 微信小程序
+- 🛡️ **生产级架构**：MongoDB 事务 + 乐观锁 + 请求限流
+- ⚡ **高性能**：索引优化 + 连接池 + 缓存策略
+
 ## 项目结构
 
 ```
@@ -30,6 +37,10 @@ hotel-booking-platform/
   - **推荐**: MongoDB + Mongoose ODM（✨ 已集成）
   - 可选: MySQL/PostgreSQL
 - **认证**: JWT（双 Token）
+- **并发控制**: 
+  - ✅ 请求限流（express-rate-limit）
+  - ✅ MongoDB 事务（Transaction）
+  - ✅ 乐观锁防超卖（Optimistic Locking）
 
 ## 功能模块
 
@@ -229,6 +240,21 @@ npm run build
 ### 基础路径
 - 开发环境: `http://localhost:5000/api`
 
+### 限流说明
+所有 API 接口均已启用限流保护：
+
+| 接口类型 | 限制 | 超限响应 |
+|---------|------|---------|
+| 全局 API | 15分钟/100请求 | 429 Too Many Requests |
+| 登录接口 | 15分钟/5次 | 429 Too Many Requests |
+| 创建订单 | 1分钟/5个 | 429 Too Many Requests |
+| 支付操作 | 1分钟/3次 | 429 Too Many Requests |
+
+**响应头**：
+- `RateLimit-Limit`: 时间窗口内的最大请求数
+- `RateLimit-Remaining`: 剩余可用请求数
+- `RateLimit-Reset`: 限制重置时间戳
+
 ### 主要接口
 
 #### 认证
@@ -251,6 +277,21 @@ npm run build
 - `PUT /api/admin/hotels/:id/reject` - 审核拒绝
 - `PUT /api/admin/hotels/:id/publish` - 发布酒店
 - `PUT /api/admin/hotels/:id/unpublish` - 下线酒店
+
+#### 购物车（需认证）
+- `GET /api/cart` - 获取购物车
+- `POST /api/cart` - 添加商品到购物车
+- `PUT /api/cart/update` - 更新商品数量
+- `DELETE /api/cart/remove/:itemIndex` - 删除购物车商品
+- `POST /api/cart/clear` - 清空购物车
+
+#### 订单管理（需认证，已启用并发控制）
+- `GET /api/orders` - 获取我的订单列表
+- `POST /api/orders` - 创建订单（**限流：1分钟5个**）
+- `GET /api/orders/:orderId` - 获取订单详情
+- `PUT /api/orders/:orderId/confirm` - 确认订单
+- `PUT /api/orders/:orderId/pay` - 支付订单（**限流：1分钟3次，事务保护，防超卖**）
+- `PUT /api/orders/:orderId/cancel` - 取消订单
 
 ## 数据字段说明
 
@@ -337,9 +378,66 @@ PS F:\hotel-booking-platform> .\test-double-token.ps1
 - ✅ **密码加密**：自动 bcrypt 哈希处理（pre-save 钩子）
 - ✅ **索引优化**：文本索引和复合索引，提升查询性能
 - ✅ **数据验证**：Schema 级别的字段验证和类型检查
-- ✅ **数据种子脚本**：快速初始化示例数据（4个用户 + 4家酒店）
+- ✅ **数据种子脚本**：快速初始化示例数据（4个用户 + 14家酒店，其中上海10家）
 - ✅ **错误处理**：MongoDB 特定错误处理（ValidationError, E11000 等）
 - ✅ **聚合管道**：支持复杂查询（按城市分组、统计等）
+
+## 🛡️ 并发控制与超卖防护
+
+本项目已实现完整的并发控制机制，防止多用户同时下单导致的超卖问题。
+
+### 核心功能
+
+#### 1. 请求限流（Rate Limiting）
+防止 API 滥用和暴力攻击：
+
+| 限流器 | 限制 | 说明 |
+|--------|------|------|
+| 全局限流 | 15分钟/100请求 | 防止 API 被大量请求攻击 |
+| 登录限流 | 15分钟/5次 | 防止暴力破解密码 |
+| 订单限流 | 1分钟/5个订单 | 防止恶意刷单 |
+| 支付限流 | 1分钟/3次支付 | 防止重复支付攻击 |
+
+#### 2. MongoDB 事务
+支付流程使用事务保证原子性：
+- ✅ 订单创建 → 库存扣减 → 状态更新
+- ✅ 要么全部成功，要么全部回滚
+- ✅ 失败自动回滚，保证数据一致性
+
+#### 3. 乐观锁防超卖
+使用条件更新防止并发超卖：
+```javascript
+// 只有库存充足时才扣减
+await Hotel.updateOne(
+  { 'rooms.quantity': { $gte: item.quantity } },
+  { $inc: { 'rooms.$.quantity': -item.quantity } }
+);
+```
+
+### 防护效果
+
+| 攻击场景 | 防护措施 | 效果 |
+|---------|---------|------|
+| 超卖 | 事务 + 乐观锁 | ✅ 100人抢1间房，只有1人成功 |
+| 暴力破解 | 登录限流 | ✅ 15分钟最多5次尝试 |
+| 恶意刷单 | 订单限流 | ✅ 1分钟最多5个订单 |
+| 重复支付 | 支付限流 + 状态检查 | ✅ 防止重复扣款 |
+| API滥用 | 全局限流 | ✅ 防止接口被刷 |
+
+### 测试验证
+
+```bash
+# 快速测试限流
+1..10 | ForEach-Object {
+  Invoke-RestMethod -Uri http://localhost:5000/api/hotels
+}
+# 前100次正常，超过返回 429 Too Many Requests
+```
+
+### 详细文档
+- 📄 [并发控制实现文档](./CONCURRENCY_CONTROL.md)
+- 📄 [并发测试指南](./CONCURRENCY_TEST_GUIDE.md)
+- 📄 [实现总结](./CONCURRENCY_SUMMARY.md)
 
 ### 快速启动 MongoDB
 
@@ -347,20 +445,36 @@ PS F:\hotel-booking-platform> .\test-double-token.ps1
 # Docker 启动（推荐）
 docker run -d -p 27017:27017 --name mongodb mongo:latest
 
+# 如需认证（生产环境推荐）
+docker run -d -p 27017:27017 --name mongodb `
+  -e MONGO_INITDB_ROOT_USERNAME=admin `
+  -e MONGO_INITDB_ROOT_PASSWORD=admin123 `
+  mongo:latest
+
 # 初始化应用
 cd server
 npm install
 cp .env.example .env
-# 编辑 .env，设置 MONGODB_URI=mongodb://localhost:27017/hotel-booking-dev
+# 编辑 .env，设置 MONGODB_URI
 
 # 初始化数据（可选）
-node scripts/seed.js
+node scripts/seed.js              # 初始化基础数据
+node scripts/add-shanghai-hotels.js  # 添加上海酒店（可选）
 
 # 启动服务器
 npm run dev
 ```
 
 💡 **提示**: 详细说明见 [MONGODB_QUICK_START.md](./MONGODB_QUICK_START.md)
+
+### 并发控制已启用
+
+✅ 服务器启动后自动启用：
+- 请求限流中间件
+- MongoDB 事务支持
+- 乐观锁防超卖机制
+
+详见 [并发控制文档](./CONCURRENCY_CONTROL.md)
 
 ## 开发团队
 

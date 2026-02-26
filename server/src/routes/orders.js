@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const orderController = require('../controllers/orderController');
 const { auth } = require('../middleware/auth');
+const { orderLimiter, paymentLimiter } = require('../middleware/rateLimiter');
 
 // 所有订单路由都需要认证
 router.use(auth);
@@ -15,8 +16,9 @@ router.get('/', orderController.getMyOrders);
 /**
  * 创建订单 (从购物车结账)
  * POST /api/orders
+ * 应用订单限流，防止恶意刷单
  */
-router.post('/', orderController.createOrder);
+router.post('/', orderLimiter, orderController.createOrder);
 
 /**
  * 获取订单详情
@@ -33,8 +35,9 @@ router.put('/:orderId/confirm', orderController.confirmOrder);
 /**
  * 完成支付
  * PUT /api/orders/:orderId/pay
+ * 应用支付限流，防止重复支付攻击
  */
-router.put('/:orderId/pay', orderController.completePayment);
+router.put('/:orderId/pay', paymentLimiter, orderController.completePayment);
 
 /**
  * 取消订单
