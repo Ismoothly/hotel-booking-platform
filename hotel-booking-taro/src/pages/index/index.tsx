@@ -617,13 +617,13 @@ export default function Index() {
                   <View>
                     <View className="flex items-center">
                       <Text className="text-accent font-bold text-28px">
-                        ¥{getMinPrice(hotel.rooms)}
+                        ¥{getMinPrice(hotel.rooms).toFixed(2)}
                       </Text>
                       <Text className="text-xs text-text3 ml-1">起</Text>
                       {getMinOriginalPrice(hotel.rooms) >
                         getMinPrice(hotel.rooms) && (
                         <Text className="text-xs text-text3 ml-2 line-through">
-                          ¥{getMinOriginalPrice(hotel.rooms)}
+                          ¥{getMinOriginalPrice(hotel.rooms).toFixed(2)}
                         </Text>
                       )}
                       {hotel.activeDiscountPercent > 0 && (

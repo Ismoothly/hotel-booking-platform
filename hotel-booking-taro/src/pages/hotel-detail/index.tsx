@@ -263,12 +263,12 @@ export default function HotelDetail() {
                           marginRight: "8rpx",
                         }}
                       >
-                        ¥{room.price}/晚
+                        ¥{room.price.toFixed(2)}/晚
                       </Text>
-                      <Text>¥{room.effectivePrice}/晚</Text>
+                      <Text>¥{room.effectivePrice!.toFixed(2)}/晚</Text>
                     </>
                   ) : (
-                    <Text>¥{room.price}/晚</Text>
+                    <Text>¥{room.price.toFixed(2)}/晚</Text>
                   )}
                 </View>
               </View>
