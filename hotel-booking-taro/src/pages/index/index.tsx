@@ -12,6 +12,7 @@ import {
 import { useState } from "react";
 import Taro, { useLoad } from "@tarojs/taro";
 import { hotelAPI, setAPIBaseURL } from "../../services/api";
+import DateRangePicker from "../hotel-list/components/DateRangePicker";
 
 interface Hotel {
   _id: string;
@@ -87,12 +88,16 @@ const ICONS = {
 export default function Index() {
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(false);
+  // 输入框关键词
   const [searchValue, setSearchValue] = useState("");
+  // 选中的快捷标签数组
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedCity, setSelectedCity] = useState("上海");
   const [selectedStar, setSelectedStar] = useState(0);
   const [selectedPrice, setSelectedPrice] = useState(0);
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
+  const [dateVisible, setDateVisible] = useState(false);
 
   useLoad(() => {
     console.log("🏠 首页加载");
@@ -122,11 +127,17 @@ export default function Index() {
         ...filters,
       };
 
-      // 如果没有指定facilities参数，才使用keyword搜索
+      // 关键字与设施处理
       if (filters.keyword !== undefined) {
         params.keyword = filters.keyword;
       } else if (!filters.facilities && searchValue) {
         params.keyword = searchValue;
+      }
+
+      if (filters.facilities !== undefined) {
+        params.facilities = filters.facilities;
+      } else if (selectedTags.length > 0) {
+        params.facilities = selectedTags.join(",");
       }
 
       // 添加星级筛选
@@ -171,16 +182,33 @@ export default function Index() {
     setSearchValue(value);
   };
 
+  // 点击搜索按钮，跳转至酒店列表页并携带当前筛选参数
+  const handleSearchButton = () => {
+    const params: any = {
+      city: selectedCity,
+      checkIn: checkInDate,
+      checkOut: checkOutDate,
+    };
+    if (searchValue) params.keyword = searchValue;
+    if (selectedTags.length > 0) params.facilities = selectedTags.join(",");
+    if (selectedStar > 0) params.starRating = selectedStar + 2;
+    if (selectedPrice > 0) params.priceRange = PRICE_VALUES[selectedPrice];
+
+    const query = new URLSearchParams(params).toString();
+    Taro.navigateTo({
+      url: `/pages/hotel-list/index?${query}`,
+    });
+  };
+
   const handleTagClick = (tag: string) => {
-    if (searchValue === tag) {
-      // 取消选中
-      setSearchValue("");
-      fetchHotels({});
-    } else {
-      // 选中该标签
-      setSearchValue(tag);
-      fetchHotels({ facilities: tag });
-    }
+    setSelectedTags((prev) => {
+      const idx = prev.indexOf(tag);
+      if (idx === -1) {
+        return [...prev, tag];
+      }
+      // remove
+      return prev.filter((t) => t !== tag);
+    });
   };
 
   const handleCityChange = (e: any) => {
@@ -209,13 +237,13 @@ export default function Index() {
     fetchHotels(params);
   };
 
-  const handleCheckInDateChange = (e: any) => {
-    setCheckInDate(e.detail.value);
-  };
-
-  const handleCheckOutDateChange = (e: any) => {
-    setCheckOutDate(e.detail.value);
-  };
+  // legacy handlers replaced by DateRangePicker
+  // const handleCheckInDateChange = (e: any) => {
+  //   setCheckInDate(e.detail.value);
+  // };
+  // const handleCheckOutDateChange = (e: any) => {
+  //   setCheckOutDate(e.detail.value);
+  // };
 
   const handleGetLocation = async () => {
     try {
@@ -422,51 +450,48 @@ export default function Index() {
         </View>
 
         <View className="flex items-center mb-2 gap-2">
-          <View className="flex-1">
-            <Picker
-              mode="date"
-              value={checkInDate}
-              onChange={handleCheckInDateChange}
-            >
-              <View className="flex items-center justify-between px-3 h-8 bg-white rounded-xl border border-solid border-border">
-                <View className="flex items-center gap-2">
-                  <Text className="text-base font-medium leading-8 text-text1">
-                    {formatDayLabel(checkInDate)}
-                  </Text>
-                </View>
-                <Image src={ICONS.calendarBlue} className="w-4 h-4" />
-              </View>
-            </Picker>
+          <View
+            className="flex-1 flex items-center justify-between px-3 h-8 bg-white rounded-xl border border-solid border-border cursor-pointer"
+            onClick={() => setDateVisible(true)}
+          >
+            <View className="flex items-center gap-2">
+              <Text className="text-base font-medium leading-8 text-text1">
+                {formatDayLabel(checkInDate)} - {formatDayLabel(checkOutDate)}
+              </Text>
+            </View>
+            <Image src={ICONS.calendarBlue} className="w-4 h-4" />
           </View>
           <View className="px-2 py-0_5 text-xs text-accent bg-accentTint rounded-lg whitespace-nowrap">
             <Text>共{calculateNights()}晚</Text>
-          </View>
-          <View className="flex-1">
-            <Picker
-              mode="date"
-              value={checkOutDate}
-              onChange={handleCheckOutDateChange}
-            >
-              <View className="flex items-center justify-between px-3 h-8 bg-white rounded-xl border border-solid border-border">
-                <View className="flex items-center gap-2">
-                  <Text className="text-base font-medium leading-8 text-text1">
-                    {formatDayLabel(checkOutDate)}
-                  </Text>
-                </View>
-                <Image src={ICONS.calendarBlue} className="w-4 h-4" />
-              </View>
-            </Picker>
           </View>
         </View>
 
         <View className="flex items-center justify-between">
           <View
             className="flex items-center justify-center gap-2 flex-1 bg-primary text-white border border-solid border-primary rounded-xl h-8 leading-8 px-4 text-28px font-bold shadow-primary"
-            onClick={() => fetchHotels()}
+            onClick={handleSearchButton}
           >
             <Image src={ICONS.searchWhite} className="w-4 h-4" />
             <Text className="inline-block relative">搜索</Text>
           </View>
+        </View>
+        {/* 快捷标签 */}
+        <View className="mt-3 px-1">
+          <ScrollView
+            scrollX
+            className="flex overflow-x-auto gap-2 pb-2 w-full no-scrollbar"
+            enableFlex
+          >
+            {QUICK_TAGS.map((tag, index) => (
+              <View
+                key={index}
+                className={`px-4 h-8 flex items-center justify-center rounded-full text-base shadow-card whitespace-nowrap ${selectedTags.includes(tag) ? "bg-primary text-white" : "bg-white text-text2"}`}
+                onClick={() => handleTagClick(tag)}
+              >
+                {tag}
+              </View>
+            ))}
+          </ScrollView>
         </View>
 
         <View className="hidden">
@@ -511,39 +536,41 @@ export default function Index() {
           />
           <View
             className="bg-btnGradient text-white rounded-20px h-8 leading-8 px-6 text-sm font-bold shadow-gradient"
-            onClick={() => fetchHotels()}
+            onClick={() => {
+              const params = new URLSearchParams({
+                city: selectedCity,
+                checkIn: checkInDate,
+                checkOut: checkOutDate,
+                keyword: searchValue || "",
+              });
+              Taro.navigateTo({
+                url: `/pages/hotel-list/index?${params.toString()}`,
+              });
+            }}
           >
             搜索
           </View>
         </View>
       </View>
 
-      {/* 快捷标签（卡片外） */}
-      <View className="px-3 mt-2 mb-3">
-        <ScrollView
-          scrollX
-          className="flex overflow-x-auto gap-2 pb-2 w-full no-scrollbar"
-          enableFlex
-        >
-          {QUICK_TAGS.map((tag, index) => (
-            <View
-              key={index}
-              className={`px-4 h-8 flex items-center justify-center rounded-full text-base shadow-card whitespace-nowrap ${searchValue === tag ? "bg-primary text-white" : "bg-white text-text2"}`}
-              onClick={() => handleTagClick(tag)}
-            >
-              {tag}
-            </View>
-          ))}
-        </ScrollView>
-      </View>
+      {/* date picker modal */}
+      <DateRangePicker
+        visible={dateVisible}
+        checkInDate={checkInDate}
+        checkOutDate={checkOutDate}
+        onClose={() => setDateVisible(false)}
+        onChange={(inD, outD) => {
+          setCheckInDate(inD);
+          setCheckOutDate(outD);
+        }}
+        onConfirm={(inD, outD) => {
+          setCheckInDate(inD);
+          setCheckOutDate(outD);
+          setDateVisible(false);
+        }}
+      />
 
-      {loading && (
-        <View className="p-5 text-center text-text3 text-sm">
-          <Text>加载中...</Text>
-        </View>
-      )}
-
-      <ScrollView scrollY className="px-3 box-border">
+      <ScrollView scrollY className="hidden px-3 box-border">
         {hotels.map((hotel) => (
           <View
             key={hotel._id}
