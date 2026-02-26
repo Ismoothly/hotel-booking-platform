@@ -328,8 +328,14 @@ export default function Index() {
   };
 
   const handleHotelDetail = (hotelId: string) => {
+    const params: any = {
+      id: hotelId,
+    };
+    if (checkInDate) params.checkIn = checkInDate;
+    if (checkOutDate) params.checkOut = checkOutDate;
+    const query = new URLSearchParams(params).toString();
     Taro.navigateTo({
-      url: `/pages/hotel-detail/index?id=${hotelId}`,
+      url: `/pages/hotel-detail/index?${query}`,
     });
   };
 

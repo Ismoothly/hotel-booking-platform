@@ -228,9 +228,11 @@ export default function HotelList() {
   };
 
   const handleHotelDetail = (hotelId: string) => {
-    Taro.navigateTo({
-      url: `/pages/hotel-detail/index?id=${hotelId}`,
-    });
+    const params: any = { id: hotelId };
+    if (checkInDate) params.checkIn = checkInDate;
+    if (checkOutDate) params.checkOut = checkOutDate;
+    const query = new URLSearchParams(params).toString();
+    Taro.navigateTo({ url: `/pages/hotel-detail/index?${query}` });
   };
 
   return (
