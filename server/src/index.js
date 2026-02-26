@@ -4,6 +4,7 @@ const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const config = require("./config");
 const { connectDB } = require("./config/database");
+const { apiLimiter } = require("./middleware/rateLimiter");
 
 // 导入路由
 const authRoutes = require("./routes/auth");
@@ -26,6 +27,9 @@ app.use(
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cookieParser());
+
+// 全局API限流（应用于所有/api路由）
+app.use('/api/', apiLimiter);
 
 // 请求日志
 app.use((req, res, next) => {
