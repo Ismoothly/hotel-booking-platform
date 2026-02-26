@@ -110,7 +110,7 @@ exports.createOrder = async (req, res) => {
 
     console.log(`[订单] 购物车商品数: ${cart.items.length}, 总金额: ${cart.total}`);
 
-    // 验证库存 (可选，这里假设库存充足)
+    // 严格验证库存（创建订单时提前检查）
     for (const item of cart.items) {
       const hotel = await Hotel.findById(item.hotelId);
       if (!hotel) {
@@ -122,11 +122,20 @@ exports.createOrder = async (req, res) => {
       }
 
       const room = hotel.rooms.find(r => r.type === item.roomType);
-      if (!room || room.available < item.quantity) {
-        console.warn(`[订单] 库存不足: ${item.roomType}, 需要${item.quantity}间, 可用${room ? room.available : 0}间`);
+      if (!room) {
+        console.warn(`[订单] 房型不存在: ${item.roomType}`);
+        return res.status(404).json({
+          code: 404,
+          message: `房型 ${item.roomType} 不存在`
+        });
+      }
+
+      // 使用 quantity 字段检查库存
+      if (room.quantity < item.quantity) {
+        console.warn(`[订单] 库存不足: ${item.roomType}, 需要${item.quantity}间, 可用${room.quantity}间`);
         return res.status(400).json({
           code: 400,
-          message: `${item.roomType} 房型库存不足，仅剩 ${room ? room.available : 0} 间`
+          message: `${item.roomType} 库存不足，仅剩 ${room.quantity} 间`
         });
       }
     }
@@ -215,32 +224,86 @@ exports.confirmOrder = async (req, res) => {
 
 /**
  * 模拟支付完成 (实际应连接支付网关)
+ * 使用 MongoDB 事务确保原子性，防止超卖
  */
 exports.completePayment = async (req, res) => {
+  const session = await Order.startSession();
+  session.startTransaction();
+
   try {
     const userId = req.user.id;
     const { orderId } = req.params;
 
-    const order = await Order.findOne({ orderId, userId });
+    console.log(`[支付] 用户 ${userId} 开始支付订单: ${orderId}`);
+
+    const order = await Order.findOne({ orderId, userId }).session(session);
 
     if (!order) {
+      await session.abortTransaction();
       return res.status(404).json({
         code: 404,
         message: '订单不存在'
       });
     }
 
-    // 这里应该验证支付结果，现在仅演示
-    await order.markAsPaid();
-
-    // 更新酒店库存 (模拟)
-    for (const item of order.items) {
-      await Hotel.findByIdAndUpdate(
-        item.hotelId,
-        { $inc: { 'rooms.$[elem].available': -item.quantity } },
-        { arrayFilters: [{ 'elem.type': item.roomType }] }
-      );
+    if (order.paymentStatus === 'paid') {
+      await session.abortTransaction();
+      return res.status(400).json({
+        code: 400,
+        message: '订单已支付，请勿重复支付'
+      });
     }
+
+    // 事务中扣减库存，使用乐观锁防止并发超卖
+    for (const item of order.items) {
+      console.log(`[支付] 扣减库存: 酒店ID=${item.hotelId}, 房型=${item.roomType}, 数量=${item.quantity}`);
+
+      // 使用原子操作扣减库存
+      const hotel = await Hotel.findById(item.hotelId).session(session);
+      
+      if (!hotel) {
+        throw new Error(`酒店 ${item.hotelName} 不存在`);
+      }
+
+      const room = hotel.rooms.find(r => r.type === item.roomType);
+      if (!room) {
+        throw new Error(`房型 ${item.roomType} 不存在`);
+      }
+
+      // 检查库存（quantity 字段）
+      if (room.quantity < item.quantity) {
+        throw new Error(`${item.roomType} 库存不足，仅剩 ${room.quantity} 间`);
+      }
+
+      // 使用原子操作扣减库存
+      const updateResult = await Hotel.updateOne(
+        {
+          _id: item.hotelId,
+          'rooms.type': item.roomType,
+          'rooms.quantity': { $gte: item.quantity } // 确保库存充足
+        },
+        {
+          $inc: { 'rooms.$.quantity': -item.quantity }
+        },
+        { session }
+      );
+
+      // 检查是否成功更新（乐观锁）
+      if (updateResult.modifiedCount === 0) {
+        throw new Error(`${item.roomType} 库存不足或已被其他用户预订`);
+      }
+
+      console.log(`[支付] ✓ 库存扣减成功: ${item.roomType}`);
+    }
+
+    // 标记订单为已支付
+    await order.markAsPaid();
+    await order.save({ session });
+
+    console.log(`[支付] ✓ 订单 ${orderId} 支付成功`);
+
+    // 提交事务
+    await session.commitTransaction();
 
     res.json({
       code: 200,
@@ -248,11 +311,17 @@ exports.completePayment = async (req, res) => {
       data: order
     });
   } catch (error) {
+    // 回滚事务
+    await session.abortTransaction();
+    console.error(`[支付] 支付失败:`, error.message);
+    
     res.status(500).json({
       code: 500,
-      message: '支付失败',
+      message: error.message || '支付失败',
       error: error.message
     });
+  } finally {
+    session.endSession();
   }
 };
 
