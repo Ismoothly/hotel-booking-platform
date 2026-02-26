@@ -170,15 +170,15 @@ export default function DateRangePicker({
                       if (!start || (start && end)) {
                         setStart(d);
                         setEnd("");
-                        onChange?.(d, "");
+                        if (onChange) onChange(d, "");
                       } else {
                         if (d < start) {
                           setStart(d);
                           setEnd("");
-                          onChange?.(d, "");
+                          if (onChange) onChange(d, "");
                         } else {
                           setEnd(d);
-                          onChange?.(start, d);
+                          if (onChange) onChange(start, d);
                         }
                       }
                     }}
@@ -218,15 +218,15 @@ export default function DateRangePicker({
                       if (!start || (start && end)) {
                         setStart(d);
                         setEnd("");
-                        onChange?.(d, "");
+                        if (onChange) onChange(d, "");
                       } else {
                         if (d < start) {
                           setStart(d);
                           setEnd("");
-                          onChange?.(d, "");
+                          if (onChange) onChange(d, "");
                         } else {
                           setEnd(d);
-                          onChange?.(start, d);
+                          if (onChange) onChange(start, d);
                         }
                       }
                     }}
