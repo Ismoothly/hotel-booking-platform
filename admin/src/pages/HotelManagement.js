@@ -345,8 +345,8 @@ const HotelManagement = () => {
       width: 260,
       render: (_, record) => (
         <div style={{ maxWidth: '100%', overflow: 'hidden' }}>
-        <Space size={0.5}>
-          {user.role === 'merchant' && (
+          <Space size={0.5} wrap>
+            {user.role === 'merchant' && (
             <Button type="link" onClick={() => {
               setDiscountHotel(record);
               discountForm.setFieldsValue({
