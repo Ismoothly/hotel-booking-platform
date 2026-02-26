@@ -43,16 +43,21 @@ export default function HotelDetail() {
   const [checkOutDate, setCheckOutDate] = useState("");
 
   useLoad(() => {
-    const { id } = router.params;
+    const { id, checkIn, checkOut } = router.params as any;
     if (id) {
       fetchHotelDetail(id);
     }
-    // 设置默认日期（今天和明天）
-    const today = new Date();
-    const tomorrow = new Date(today);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    setCheckInDate(formatDateForPicker(today));
-    setCheckOutDate(formatDateForPicker(tomorrow));
+    if (checkIn && checkOut) {
+      setCheckInDate(checkIn);
+      setCheckOutDate(checkOut);
+    } else {
+      // 设置默认日期（今天和明天）
+      const today = new Date();
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      setCheckInDate(formatDateForPicker(today));
+      setCheckOutDate(formatDateForPicker(tomorrow));
+    }
   });
 
   const formatDateForPicker = (date: Date) => {
@@ -258,12 +263,12 @@ export default function HotelDetail() {
                           marginRight: "8rpx",
                         }}
                       >
-                        ¥{room.price}/晚
+                        ¥{room.price.toFixed(2)}/晚
                       </Text>
-                      <Text>¥{room.effectivePrice}/晚</Text>
+                      <Text>¥{room.effectivePrice!.toFixed(2)}/晚</Text>
                     </>
                   ) : (
-                    <Text>¥{room.price}/晚</Text>
+                    <Text>¥{room.price.toFixed(2)}/晚</Text>
                   )}
                 </View>
               </View>

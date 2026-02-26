@@ -157,7 +157,16 @@ const HotelManagement = () => {
   const handleSubmit = async (values) => {
     try {
       const { region, detailAddress, rooms, facilities, facilityCustom, nearbyAttractions, nearbyShopping, nameCn, nameEn, starRating, openingDate, transportation } = values;
-      const city = region && region.length >= 2 ? region[1] : '';
+      
+      // 从级联选择中提取城市名称
+      // regionData 结构: [{ value: 省, children: [{ value: 市, children: [{ value: 区 }] }] }]
+      // 所以 region 应该是 [省值, 市值, 区值]
+      // 我们需要取市级的值，即 region[1]
+      if (!region || region.length < 2) {
+        message.error('请选择地区（至少到市级）');
+        return;
+      }
+      const city = region[1]; // 取市级的值
       const addressParts = region && region.length ? region : [];
       const address = addressParts.length ? addressParts.join('') + (detailAddress ? detailAddress.trim() : '') : (detailAddress || '');
       const facilityList = [...(facilities || []), ...(facilityCustom || [])].filter(Boolean);

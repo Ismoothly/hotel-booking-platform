@@ -13,7 +13,12 @@ exports.getAllHotels = async (req, res) => {
     if (reviewStatus) query.reviewStatus = reviewStatus;
     if (city && String(city).trim()) {
       const cityStr = String(city).trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      query.city = new RegExp(`^${cityStr}`);
+      // 兼容"上海市"和"上海"两种格式
+      const cityWithoutSuffix = cityStr.replace(/市$/, '');
+      query.$or = [
+        { city: new RegExp(`^${cityStr}`) },
+        { city: new RegExp(`^${cityWithoutSuffix}`) }
+      ];
     }
     if (merchantId) {
       if (!mongoose.Types.ObjectId.isValid(merchantId)) {
