@@ -30,6 +30,7 @@ const Home = () => {
     { label: '广州', value: '广州' },
     { label: '深圳', value: '深圳' },
     { label: '杭州', value: '杭州' },
+    { label: '嘉兴', value: '嘉兴' },
     { label: '成都', value: '成都' },
     { label: '西安', value: '西安' },
     { label: '南京', value: '南京' },
@@ -207,6 +208,7 @@ const Home = () => {
         'Guangzhou': '广州',
         'Shenzhen': '深圳',
         'Hangzhou': '杭州',
+        'Jiaxing': '嘉兴',
         'Chengdu': '成都',
         "Xi'an": '西安',
         'Xian': '西安',
@@ -221,7 +223,7 @@ const Home = () => {
       }
       
       // 检查中文城市名
-      const supportedCities = ['北京', '天津', '上海', '广州', '深圳', '杭州', '成都', '西安', '南京', '武汉', '重庆'];
+      const supportedCities = ['北京', '天津', '上海', '广州', '深圳', '杭州', '嘉兴', '成都', '西安', '南京', '武汉', '重庆'];
       if (supportedCities.some(city => cityName.includes(city))) {
         matchedCity = supportedCities.find(city => cityName.includes(city));
       }
@@ -257,6 +259,7 @@ const Home = () => {
     const cityRanges = [
       { name: '北京', lat: [39.4, 41.6], lng: [115.4, 117.5] },
       { name: '天津', lat: [38.7, 40.3], lng: [116.7, 118.1] },
+      { name: '嘉兴', lat: [30.3, 31.1], lng: [120.2, 121.3] },
       { name: '上海', lat: [30.7, 31.9], lng: [120.8, 122.2] },
       { name: '广州', lat: [22.5, 24.0], lng: [112.9, 114.5] },
       { name: '深圳', lat: [22.4, 22.9], lng: [113.7, 114.7] },

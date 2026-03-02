@@ -31,5 +31,9 @@ module.exports = {
   jwtRefreshSecret,
   jwtAccessExpire: process.env.JWT_ACCESS_EXPIRE || '15m',
   jwtRefreshExpire: process.env.JWT_REFRESH_EXPIRE || '7d',
-  corsOrigins: getCorsOrigins()
+  corsOrigins: getCorsOrigins(),
+  agentEnabled: process.env.AGENT_ENABLED === 'true' || process.env.DEEPSEEK_ENABLED === 'true',
+  agentApiUrl: process.env.AGENT_API_URL || process.env.DEEPSEEK_API_URL || 'https://api.deepseek.com/v1/chat/completions',
+  agentApiKey: process.env.AGENT_API_KEY || process.env.DEEPSEEK_API_KEY || '',
+  agentModel: process.env.AGENT_MODEL || process.env.DEEPSEEK_MODEL || 'deepseek-chat'
 };

@@ -249,4 +249,16 @@ export const orderAPI = {
     })
 }
 
+/**
+ * Agent API（只读问答）
+ */
+export const agentAPI = {
+  chat: (message: string) =>
+    request({
+      url: '/agent/chat',
+      method: 'POST',
+      data: { message }
+    })
+}
+
 export default request

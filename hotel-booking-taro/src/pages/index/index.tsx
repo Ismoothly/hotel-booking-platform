@@ -11,7 +11,7 @@ import {
 } from "@tarojs/components";
 import { useState } from "react";
 import Taro, { useLoad } from "@tarojs/taro";
-import { hotelAPI, setAPIBaseURL } from "../../services/api";
+import { agentAPI, hotelAPI, setAPIBaseURL } from "../../services/api";
 import DateRangePicker from "../hotel-list/components/DateRangePicker";
 
 interface Hotel {
@@ -33,6 +33,7 @@ const CITIES = [
   "广州",
   "深圳",
   "杭州",
+  "嘉兴",
   "成都",
   "西安",
   "南京",
@@ -98,6 +99,9 @@ export default function Index() {
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
   const [dateVisible, setDateVisible] = useState(false);
+  const [agentQuestion, setAgentQuestion] = useState("");
+  const [agentAnswer, setAgentAnswer] = useState("");
+  const [agentLoading, setAgentLoading] = useState(false);
 
   useLoad(() => {
     console.log("🏠 首页加载");
@@ -303,6 +307,7 @@ export default function Index() {
     const cityRanges = [
       { name: "北京", lat: [39.4, 41.6], lng: [115.4, 117.5] },
       { name: "天津", lat: [38.7, 40.3], lng: [116.7, 118.1] },
+      { name: "嘉兴", lat: [30.3, 31.1], lng: [120.2, 121.3] },
       { name: "上海", lat: [30.7, 31.9], lng: [120.8, 122.2] },
       { name: "广州", lat: [22.5, 24.0], lng: [112.9, 114.5] },
       { name: "深圳", lat: [22.4, 22.9], lng: [113.7, 114.7] },
@@ -385,6 +390,26 @@ export default function Index() {
     const d = new Date(dateStr);
     const day = d.getDate();
     return `${day}日`;
+  };
+
+  const handleAskAgent = async () => {
+    const message = agentQuestion.trim();
+    if (!message) {
+      Taro.showToast({ title: "请输入问题", icon: "none" });
+      return;
+    }
+
+    try {
+      setAgentLoading(true);
+      const response: any = await agentAPI.chat(message);
+      const reply = response?.data?.reply || "智能体暂未返回内容";
+      setAgentAnswer(String(reply));
+    } catch (error: any) {
+      setAgentAnswer("请求失败，请稍后重试");
+      console.error("首页智能体请求失败:", error?.message || error);
+    } finally {
+      setAgentLoading(false);
+    }
   };
 
   return (
@@ -575,6 +600,34 @@ export default function Index() {
           setDateVisible(false);
         }}
       />
+
+      <View className="mx-3 mt-3 bg-white rounded-xl shadow-soft p-3">
+        <View className="text-text1 font-semibold text-sm mb-2">
+          🤖 智能体助手
+        </View>
+        <Input
+          className="w-full h-10 px-3 bg-app rounded-lg text-sm box-border border border-solid border-border mb-2"
+          type="text"
+          value={agentQuestion}
+          onInput={(e) => setAgentQuestion(e.detail.value)}
+          placeholder="例如：如何排查下单失败？"
+          placeholderClass="placeholder"
+        />
+        <Button
+          className="w-full h-9 leading-9 bg-primary text-white text-sm rounded-lg"
+          loading={agentLoading}
+          onClick={handleAskAgent}
+        >
+          {agentLoading ? "生成中..." : "发送给智能体"}
+        </Button>
+        {!!agentAnswer && (
+          <View className="mt-2 p-2 bg-app rounded-lg">
+            <Text className="text-xs text-text2 whitespace-pre-wrap">
+              {agentAnswer}
+            </Text>
+          </View>
+        )}
+      </View>
 
       <ScrollView scrollY className="hidden px-3 box-border">
         {hotels.map((hotel) => (

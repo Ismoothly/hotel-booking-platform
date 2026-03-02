@@ -1,5 +1,7 @@
 const rateLimit = require('express-rate-limit');
 
+const ipKeyGenerator = rateLimit.ipKeyGenerator || ((ip) => ip);
+
 /**
  * 通用 API 限流器
  * 防止暴力请求
@@ -49,8 +51,7 @@ const orderLimiter = rateLimit({
     if (req.user && req.user.id) {
       return `user:${req.user.id}`;
     }
-    // 使用 forwarded header 或直接使用 IP
-    return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    return ipKeyGenerator(req.ip);
   }
 });
 
@@ -68,7 +69,28 @@ const paymentLimiter = rateLimit({
     if (req.user && req.user.id) {
       return `user:${req.user.id}`;
     }
-    return req.ip || req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+    return ipKeyGenerator(req.ip);
+  }
+});
+
+/**
+ * Agent 问答限流器
+ * 防止 AI 接口被滥用
+ */
+const agentLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1分钟
+  max: 20, // 每个用户每分钟最多20次
+  message: {
+    code: 429,
+    message: 'Agent 请求过于频繁，请稍后再试'
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  keyGenerator: (req, res) => {
+    if (req.user && req.user.id) {
+      return `user:${req.user.id}`;
+    }
+    return ipKeyGenerator(req.ip);
   }
 });
 
@@ -76,5 +98,6 @@ module.exports = {
   apiLimiter,
   loginLimiter,
   orderLimiter,
-  paymentLimiter
+  paymentLimiter,
+  agentLimiter
 };

@@ -1,0 +1,12 @@
+graph LR
+    Client["👤 前端客户端"] -->|HTTP REST| Gateway["🚪 API Gateway<br/>限流/认证"]
+    Admin["🔧 管理后台"] -->|HTTP REST| Gateway
+    Wechat["📱 微信小程序"] -->|HTTP REST| Gateway
+    
+    Gateway -->|分发| Router["📍 路由层<br/>auth/hotels/orders/admin"]
+    Router --> Controller["⚙️ 控制层<br/>业务流程编排"]
+    Controller --> Model["💾 模型层<br/>User/Hotel/Order"]
+    Model --> DB[("🗄️ MongoDB<br/>事务+乐观锁")]
+    
+    Controller -->|日志/指标| Monitor["📊 可观测性<br/>Logs/Metrics"]
+    Gateway -->|限流日志| Monitor

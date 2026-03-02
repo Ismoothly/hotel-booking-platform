@@ -33,6 +33,7 @@ const HotelList = () => {
     { label: '广州', value: '广州' },
     { label: '深圳', value: '深圳' },
     { label: '杭州', value: '杭州' },
+    { label: '嘉兴', value: '嘉兴' },
     { label: '成都', value: '成都' },
     { label: '西安', value: '西安' },
     { label: '南京', value: '南京' },

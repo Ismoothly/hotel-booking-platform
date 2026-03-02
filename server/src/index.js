@@ -6,12 +6,17 @@ const config = require("./config");
 const { connectDB } = require("./config/database");
 const { apiLimiter } = require("./middleware/rateLimiter");
 
+// 初始化库存队列服务
+const inventoryQueue = require("./services/inventoryQueue");
+
 // 导入路由
 const authRoutes = require("./routes/auth");
 const hotelRoutes = require("./routes/hotels");
 const adminRoutes = require("./routes/admin");
 const cartRoutes = require("./routes/cart");
 const orderRoutes = require("./routes/orders");
+const queueRoutes = require("./routes/queue");
+const agentRoutes = require("./routes/agent");
 const sse = require("./sse");
 
 const app = express();
@@ -55,6 +60,8 @@ app.use("/api/hotels", hotelRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/queue", queueRoutes);
+app.use('/api/agent', agentRoutes);
 
 // 404处理
 app.use((req, res) => {
@@ -88,6 +95,7 @@ async function startServer() {
       console.log(`Server is running on port ${PORT}`);
       console.log(`Environment: ${config.env}`);
       console.log(`API URL: http://0.0.0.0:${PORT}`);
+      console.log("✓ Message Queue: Ready (inventory-deduction)");
       console.log("=================================");
     });
   } catch (err) {

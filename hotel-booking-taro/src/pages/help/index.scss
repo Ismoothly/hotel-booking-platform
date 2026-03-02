@@ -49,4 +49,63 @@
       color: var(--text-3);
     }
   }
+
+  .agent-section {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: var(--shadow-soft);
+    padding: 20px;
+
+    .agent-title {
+      display: block;
+      font-size: 16px;
+      font-weight: bold;
+      color: var(--text-1);
+      margin-bottom: 12px;
+    }
+
+    .agent-input {
+      width: 100%;
+      min-height: 160px;
+      background: var(--bg-gray);
+      border-radius: 8px;
+      padding: 12px;
+      box-sizing: border-box;
+      font-size: 14px;
+      color: var(--text-1);
+      margin-bottom: 12px;
+    }
+
+    .agent-btn {
+      width: 100%;
+      background: var(--primary-color);
+      color: #fff;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 40px;
+      margin-bottom: 12px;
+    }
+
+    .agent-answer {
+      background: var(--bg-gray);
+      border-radius: 8px;
+      padding: 12px;
+
+      .answer-title {
+        display: block;
+        font-size: 14px;
+        font-weight: bold;
+        color: var(--text-1);
+        margin-bottom: 8px;
+      }
+
+      .answer-text {
+        display: block;
+        font-size: 14px;
+        color: var(--text-2);
+        line-height: 1.6;
+        white-space: pre-wrap;
+      }
+    }
+  }
 }

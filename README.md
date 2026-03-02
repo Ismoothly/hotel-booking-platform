@@ -52,7 +52,7 @@ hotel-booking-platform/
    - 入住日期选择
    - 筛选条件（星级、价格）
    - 快捷标签
-   - 支持11个主要城市
+  - 支持12个主要城市（新增嘉兴）
 
 2. **酒店列表页**
    - 核心条件筛选
@@ -111,26 +111,25 @@ hotel-booking-platform/
 
 ```bash
 # 1. 启动 MongoDB (Docker)
-docker run -d -p 27017:27017 --name mongodb mongo:latest
+
+docker start mongodb
+docker run -d -p 27018:27017 --name mongodb mongo:latest
 # #如果失败，重建容器：
 docker rm -f mongodb
-docker run -d -p 27017:27017 --name mongodb `
+docker run -d -p 27018:27017 --name mongodb `
   -e MONGO_INITDB_ROOT_USERNAME=admin `
   -e MONGO_INITDB_ROOT_PASSWORD=admin123 `
   mongo:latest
+  # 端口冲突提示：如果本机已安装 MongoDB 服务占用 27017，推荐使用 27018 映射
   然后再测：
-  docker run --rm -it mongo:latest mongosh `
-  "mongodb://admin:admin123@host.docker.internal:27017/admin?authSource=admin" `
+  docker run --rm -it --network host mongo:latest mongosh `
+  "mongodb://admin:admin123@localhost:27018/admin?authSource=admin" `
   --eval "db.runCommand({connectionStatus:1})"
-直接连容器网络
-docker run --rm -it --network container:mongodb mongo:latest mongosh `
-  "mongodb://admin:admin123@localhost:27017/admin?authSource=admin" `
-  --eval "db.runCommand({connectionStatus:1})"
-mongDB CONNECT STRING :mongodb://admin:admin123@localhost:27017/admin
+mongDB CONNECT STRING :mongodb://admin:admin123@localhost:27018/admin?authSource=admin
 # 2. 配置环境变量
 cd server
 cp .env.example .env
-# 编辑 .env，设置 MONGODB_URI
+# 编辑 .env，设置 MONGODB_URI=mongodb://admin:admin123@localhost:27018/hotel-booking-dev?authSource=admin
 
 # 3. 初始化数据（可选）
 node scripts/seed.js
@@ -249,6 +248,7 @@ npm run build
 | 登录接口 | 15分钟/5次 | 429 Too Many Requests |
 | 创建订单 | 1分钟/5个 | 429 Too Many Requests |
 | 支付操作 | 1分钟/3次 | 429 Too Many Requests |
+| Agent 问答 | 1分钟/20次 | 429 Too Many Requests |
 
 **响应头**：
 - `RateLimit-Limit`: 时间窗口内的最大请求数
@@ -292,6 +292,31 @@ npm run build
 - `PUT /api/orders/:orderId/confirm` - 确认订单
 - `PUT /api/orders/:orderId/pay` - 支付订单（**限流：1分钟3次，事务保护，防超卖**）
 - `PUT /api/orders/:orderId/cancel` - 取消订单
+
+#### Agent（需认证，只读工具）
+- `POST /api/agent/chat` - Agent 问答（**限流：1分钟20次**）
+- 已授权工具：
+  - 查酒店：仅查询已发布酒店（`published`）
+  - 查订单：仅查询当前登录用户的订单（我的订单）
+- 安全边界：不允许创建/修改/支付/取消订单，不允许库存写操作
+
+**接入 DeepSeek（试用）**
+
+在 `server/.env` 增加：
+
+```dotenv
+DEEPSEEK_ENABLED=true
+DEEPSEEK_API_URL=https://api.deepseek.com/v1/chat/completions
+DEEPSEEK_API_KEY=你的DeepSeekKey
+DEEPSEEK_MODEL=deepseek-chat
+```
+
+然后重启后端：
+
+```bash
+cd server
+npm run dev
+```
 
 ## 数据字段说明
 
@@ -378,7 +403,7 @@ PS F:\hotel-booking-platform> .\test-double-token.ps1
 - ✅ **密码加密**：自动 bcrypt 哈希处理（pre-save 钩子）
 - ✅ **索引优化**：文本索引和复合索引，提升查询性能
 - ✅ **数据验证**：Schema 级别的字段验证和类型检查
-- ✅ **数据种子脚本**：快速初始化示例数据（4个用户 + 14家酒店，其中上海10家）
+- ✅ **数据种子脚本**：快速初始化示例数据（4个用户 + 34家酒店，其中上海10家、嘉兴2家）
 - ✅ **错误处理**：MongoDB 特定错误处理（ValidationError, E11000 等）
 - ✅ **聚合管道**：支持复杂查询（按城市分组、统计等）
 
@@ -443,10 +468,10 @@ await Hotel.updateOne(
 
 ```bash
 # Docker 启动（推荐）
-docker run -d -p 27017:27017 --name mongodb mongo:latest
+docker run -d -p 27018:27017 --name mongodb mongo:latest
 
 # 如需认证（生产环境推荐）
-docker run -d -p 27017:27017 --name mongodb `
+docker run -d -p 27018:27017 --name mongodb `
   -e MONGO_INITDB_ROOT_USERNAME=admin `
   -e MONGO_INITDB_ROOT_PASSWORD=admin123 `
   mongo:latest
@@ -455,7 +480,7 @@ docker run -d -p 27017:27017 --name mongodb `
 cd server
 npm install
 cp .env.example .env
-# 编辑 .env，设置 MONGODB_URI
+# 编辑 .env，设置 MONGODB_URI=mongodb://admin:admin123@localhost:27018/hotel-booking-dev?authSource=admin
 
 # 初始化数据（可选）
 node scripts/seed.js              # 初始化基础数据

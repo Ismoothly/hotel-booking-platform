@@ -1,6 +1,7 @@
 const Order = require('../models/Order-mongoose');
 const Cart = require('../models/Cart-mongoose');
 const Hotel = require('../models/Hotel-mongoose');
+const { sendInventoryJob } = require('../services/inventoryQueue');
 
 /**
  * 获取我的订单
@@ -224,22 +225,20 @@ exports.confirmOrder = async (req, res) => {
 
 /**
  * 模拟支付完成 (实际应连接支付网关)
- * 使用 MongoDB 事务确保原子性，防止超卖
+ * 方案：使用消息队列实现最终一致性
+ * 流程：支付 → 标记订单为已支付 → 发送库存扣减消息 → 异步消费扣库存 → 失败自动重试
  */
 exports.completePayment = async (req, res) => {
-  const session = await Order.startSession();
-  session.startTransaction();
-
   try {
     const userId = req.user.id;
     const { orderId } = req.params;
 
     console.log(`[支付] 用户 ${userId} 开始支付订单: ${orderId}`);
 
-    const order = await Order.findOne({ orderId, userId }).session(session);
+    // 1️⃣ 验证订单
+    const order = await Order.findOne({ orderId, userId });
 
     if (!order) {
-      await session.abortTransaction();
       return res.status(404).json({
         code: 404,
         message: '订单不存在'
@@ -247,72 +246,36 @@ exports.completePayment = async (req, res) => {
     }
 
     if (order.paymentStatus === 'paid') {
-      await session.abortTransaction();
       return res.status(400).json({
         code: 400,
         message: '订单已支付，请勿重复支付'
       });
     }
 
-    // 事务中扣减库存，使用乐观锁防止并发超卖
-    for (const item of order.items) {
-      console.log(`[支付] 扣减库存: 酒店ID=${item.hotelId}, 房型=${item.roomType}, 数量=${item.quantity}`);
+    // 2️⃣ 标记订单为已支付（快速响应）
+    order.status = 'paid';
+    order.paymentStatus = 'paid';
+    order.paidAt = new Date();
+    order.updatedAt = new Date();
+    await order.save();
 
-      // 使用原子操作扣减库存
-      const hotel = await Hotel.findById(item.hotelId).session(session);
-      
-      if (!hotel) {
-        throw new Error(`酒店 ${item.hotelName} 不存在`);
-      }
+    console.log(`[支付] ✓ 订单已标记为支付状态: ${orderId}`);
 
-      const room = hotel.rooms.find(r => r.type === item.roomType);
-      if (!room) {
-        throw new Error(`房型 ${item.roomType} 不存在`);
-      }
-
-      // 检查库存（quantity 字段）
-      if (room.quantity < item.quantity) {
-        throw new Error(`${item.roomType} 库存不足，仅剩 ${room.quantity} 间`);
-      }
-
-      // 使用原子操作扣减库存
-      const updateResult = await Hotel.updateOne(
-        {
-          _id: item.hotelId,
-          'rooms.type': item.roomType,
-          'rooms.quantity': { $gte: item.quantity } // 确保库存充足
-        },
-        {
-          $inc: { 'rooms.$.quantity': -item.quantity }
-        },
-        { session }
-      );
-
-      // 检查是否成功更新（乐观锁）
-      if (updateResult.modifiedCount === 0) {
-        throw new Error(`${item.roomType} 库存不足或已被其他用户预订`);
-      }
-
-      console.log(`[支付] ✓ 库存扣减成功: ${item.roomType}`);
+    // 3️⃣ 发送库存扣减消息到队列（异步处理）
+    try {
+      await sendInventoryJob(orderId, order.items);
+      console.log(`[支付] 📤 已发送库存扣减任务到队列`);
+    } catch (error) {
+      console.error(`[支付] ⚠️ 发送队列任务失败:`, error.message);
+      // 注意：这里不抛出错误，因为订单已经标记为支付，库存扣减稍后会重试
     }
-
-    // 标记订单为已支付
-    await order.markAsPaid();
-    await order.save({ session });
-
-    console.log(`[支付] ✓ 订单 ${orderId} 支付成功`);
-
-    // 提交事务
-    await session.commitTransaction();
 
     res.json({
       code: 200,
-      message: '支付成功',
+      message: '支付成功，库存处理中',
       data: order
     });
   } catch (error) {
-    // 回滚事务
-    await session.abortTransaction();
     console.error(`[支付] 支付失败:`, error.message);
     
     res.status(500).json({
@@ -320,8 +283,6 @@ exports.completePayment = async (req, res) => {
       message: error.message || '支付失败',
       error: error.message
     });
-  } finally {
-    session.endSession();
   }
 };
 

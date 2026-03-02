@@ -7,36 +7,33 @@ const config = require("./index");
 const dbConfig = {
   development: {
     url:
-      process.env.MONGODB_URI || "mongodb://localhost:27017/hotel-booking-dev",
+      process.env.MONGODB_URI || "mongodb://localhost:27018/hotel-booking-dev",
     options: {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      retryWrites: true,
-      w: "majority",
+      serverSelectionTimeoutMS: 30000,
+      socketTimeoutMS: 45000,
     },
   },
   production: {
-    url: process.env.MONGODB_URI || "mongodb://localhost:27017/hotel-booking",
+    url: process.env.MONGODB_URI || "mongodb://localhost:27018/hotel-booking",
     options: {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      retryWrites: true,
-      w: "majority",
       maxPoolSize: 10,
       minPoolSize: 2,
       socketTimeoutMS: 45000,
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 30000,
     },
   },
   test: {
     url:
       process.env.MONGODB_TEST_URI ||
-      "mongodb://localhost:27017/hotel-booking-test",
+      "mongodb://localhost:27018/hotel-booking-test",
     options: {
       useNewUrlParser: true,
       useUnifiedTopology: true,
-      retryWrites: true,
-      w: "majority",
+      serverSelectionTimeoutMS: 30000,
     },
   },
 };
