@@ -12,13 +12,15 @@ function send(res, event) {
 }
 
 /**
- * 广播：某酒店房型价格已更新
+ * 广播：某酒店房型价格/房态已更新（携带版本号）
  * @param {string} hotelId - 酒店 ID
+ * @param {number} [version] - 当前版本号
  */
-function broadcastHotelPriceUpdate(hotelId) {
+function broadcastHotelPriceUpdate(hotelId, version) {
   const event = { type: 'hotel_price_updated', hotelId: String(hotelId) };
+  if (version != null) event.version = Number(version);
   clients.forEach((res) => send(res, event));
-  console.log(`[SSE] broadcast hotel_price_updated: ${hotelId}, clients=${clients.size}`);
+  console.log(`[SSE] broadcast hotel_price_updated: ${hotelId}, version=${version}, clients=${clients.size}`);
 }
 
 /**

@@ -51,6 +51,11 @@ const cartItemSchema = new mongoose.Schema(
       type: Number,
       required: true,
     },
+    /** 加入购物车时酒店数据版本号，用于下单时校验是否过期 */
+    version: {
+      type: Number,
+      default: undefined,
+    },
     createdAt: {
       type: Date,
       default: Date.now,
@@ -113,6 +118,7 @@ cartSchema.statics.addItem = async function (userId, itemData) {
     checkInDate,
     checkOutDate,
     nights,
+    version,
   } = itemData;
 
   let cart = await this.findOne({ userId });
@@ -134,6 +140,7 @@ cartSchema.statics.addItem = async function (userId, itemData) {
     existingItem.quantity += quantity;
     existingItem.subtotal =
       existingItem.price * existingItem.quantity * existingItem.nights;
+    if (version != null) existingItem.version = version;
   } else {
     const subtotal = price * quantity * nights;
     cart.items.push({
@@ -148,6 +155,7 @@ cartSchema.statics.addItem = async function (userId, itemData) {
       checkOutDate: new Date(checkOutDate),
       nights,
       subtotal,
+      ...(version != null && { version }),
     });
   }
 

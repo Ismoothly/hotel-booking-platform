@@ -8,9 +8,10 @@ import {
   ScrollView,
   Picker,
 } from "@tarojs/components";
-import { useState, useEffect } from "react";
-import Taro, { useLoad, useRouter } from "@tarojs/taro";
+import { useState, useEffect, useRef } from "react";
+import Taro, { useLoad, useRouter, useDidShow, useDidHide } from "@tarojs/taro";
 import { hotelAPI, cartAPI } from "../../services/api";
+import { getAndClearUpdatedHotelIds, setHotelUpdateListener, removeHotelUpdateListener } from "../../services/hotelUpdateSocket";
 import "./index.scss";
 
 interface Room {
@@ -32,6 +33,7 @@ interface Hotel {
   nearbyAttractions?: string[];
   transportation?: string;
   nearbyShopping?: string[];
+  version?: number;
 }
 
 export default function HotelDetail() {
@@ -41,10 +43,16 @@ export default function HotelDetail() {
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [checkInDate, setCheckInDate] = useState("");
   const [checkOutDate, setCheckOutDate] = useState("");
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hotelIdRef = useRef<string>("");
+  const fetchHotelDetailRef = useRef<(id: string, silent?: boolean) => void>(() => {});
+  const onHotelUpdateRef = useRef<((hotelId: string) => void) | null>(null);
 
   useLoad(() => {
     const { id, checkIn, checkOut } = router.params as any;
     if (id) {
+      hotelIdRef.current = id;
       fetchHotelDetail(id);
     }
     if (checkIn && checkOut) {
@@ -60,6 +68,50 @@ export default function HotelDetail() {
     }
   });
 
+  useDidShow(() => {
+    const id = hotelIdRef.current;
+    const onHotelUpdate = (hotelId: string) => {
+      if (id && hotelId === id) fetchHotelDetailRef.current?.(id, true);
+    };
+    onHotelUpdateRef.current = onHotelUpdate;
+    setHotelUpdateListener(onHotelUpdate);
+    wsCheckRef.current = setInterval(() => {
+      const ids = getAndClearUpdatedHotelIds();
+      if (id && ids.includes(id)) fetchHotelDetailRef.current?.(id, true);
+    }, 3000);
+    pollIntervalRef.current = setInterval(() => {
+      fetchHotelDetailRef.current?.(hotelIdRef.current, true);
+    }, 30000);
+  });
+
+  useDidHide(() => {
+    if (onHotelUpdateRef.current) {
+      removeHotelUpdateListener(onHotelUpdateRef.current);
+      onHotelUpdateRef.current = null;
+    }
+    if (wsCheckRef.current) {
+      clearInterval(wsCheckRef.current);
+      wsCheckRef.current = null;
+    }
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  });
+
+  useEffect(() => {
+    return () => {
+      if (wsCheckRef.current) {
+        clearInterval(wsCheckRef.current);
+        wsCheckRef.current = null;
+      }
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, []);
+
   const formatDateForPicker = (date: Date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -67,25 +119,28 @@ export default function HotelDetail() {
     return `${year}-${month}-${day}`;
   };
 
-  const fetchHotelDetail = async (hotelId: string) => {
+  const fetchHotelDetail = async (hotelId: string, silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const response = await hotelAPI.getHotelById(hotelId);
-      setHotel(response.data);
-      const rooms =
-        response.data && response.data.rooms ? response.data.rooms : null;
+      const data = response && (response as any).data != null ? (response as any).data : response;
+      setHotel(data);
+      const rooms = data && data.rooms ? data.rooms : null;
       if (rooms && rooms.length > 0) {
         setSelectedRoom(rooms[0]);
       }
     } catch (error) {
-      Taro.showToast({
-        title: "获取酒店详情失败",
-        icon: "none",
-      });
+      if (!silent) {
+        Taro.showToast({
+          title: "获取酒店详情失败",
+          icon: "none",
+        });
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
+  fetchHotelDetailRef.current = fetchHotelDetail;
 
   const calculateNights = () => {
     if (!checkInDate || !checkOutDate) return 0;
@@ -121,6 +176,7 @@ export default function HotelDetail() {
         checkInDate,
         checkOutDate,
         quantity: 1,
+        ...(hotel!.version != null && { version: hotel!.version }),
       });
 
       if (response.code === 200) {
@@ -136,6 +192,14 @@ export default function HotelDetail() {
         }
       }
     } catch (error: any) {
+      if (error.code === 409 || error.statusCode === 409) {
+        Taro.showToast({
+          title: "价格或房态已变更，请刷新后重试",
+          icon: "none",
+        });
+        fetchHotelDetail(hotelIdRef.current, true);
+        return;
+      }
       Taro.showToast({
         title: error.message || "添加失败",
         icon: "none",

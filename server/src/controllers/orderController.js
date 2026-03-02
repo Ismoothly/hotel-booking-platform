@@ -1,6 +1,8 @@
 const Order = require('../models/Order-mongoose');
 const Cart = require('../models/Cart-mongoose');
 const Hotel = require('../models/Hotel-mongoose');
+const hotelVersion = require('../services/hotelVersion');
+const { notifyHotelUpdate } = require('../services/notifyHotelUpdate');
 
 /**
  * 获取我的订单
@@ -109,6 +111,20 @@ exports.createOrder = async (req, res) => {
     }
 
     console.log(`[订单] 购物车商品数: ${cart.items.length}, 总金额: ${cart.total}`);
+
+    // 版本校验：若购物车项带有 version，需与当前酒店版本一致
+    for (const item of cart.items) {
+      const hid = item.hotelId.toString();
+      const currentVersion = await hotelVersion.getVersion(hid);
+      const itemVersion = item.version != null ? Number(item.version) : null;
+      if (itemVersion != null && itemVersion !== currentVersion) {
+        return res.status(409).json({
+          code: 409,
+          message: '价格或房态已变更，请刷新后重试',
+          latestVersion: currentVersion,
+        });
+      }
+    }
 
     // 严格验证库存（创建订单时提前检查）
     for (const item of cart.items) {
@@ -304,6 +320,13 @@ exports.completePayment = async (req, res) => {
 
     // 提交事务
     await session.commitTransaction();
+
+    // 支付成功后递增酒店版本并推送，以便列表/详情/购物车实时更新房态
+    for (const item of order.items) {
+      const hid = item.hotelId.toString();
+      const newVersion = await hotelVersion.incVersion(hid);
+      notifyHotelUpdate(hid, newVersion);
+    }
 
     res.json({
       code: 200,

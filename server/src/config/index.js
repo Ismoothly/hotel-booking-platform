@@ -27,6 +27,7 @@ const getCorsOrigins = () => {
 module.exports = {
   port: process.env.PORT || 5000,
   env: process.env.NODE_ENV || 'development',
+  redisUrl: process.env.REDIS_URL || null,
   jwtAccessSecret,
   jwtRefreshSecret,
   jwtAccessExpire: process.env.JWT_ACCESS_EXPIRE || '15m',

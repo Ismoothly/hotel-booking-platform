@@ -1,5 +1,6 @@
 const Hotel = require("../models/Hotel-mongoose");
 const mongoose = require("mongoose");
+const hotelVersion = require("../services/hotelVersion");
 
 /**
  * 获取酒店列表
@@ -67,8 +68,11 @@ exports.getHotels = async (req, res) => {
     const total = await Hotel.countDocuments(query);
 
     const now = Date.now();
+    const hotelIds = hotels.map((h) => h._id.toString());
+    const versionsMap = await hotelVersion.getVersions(hotelIds);
     const transformed = hotels.map((h) => {
       const o = h.toObject();
+      o.version = versionsMap[o._id.toString()] ?? 1;
       let p = 0;
       if (Array.isArray(o.discounts)) {
         for (const d of o.discounts) {
@@ -137,6 +141,7 @@ exports.getHotelById = async (req, res) => {
       });
     }
 
+    const version = await hotelVersion.getVersion(id);
     const now = Date.now();
     const o = hotel.toObject();
     let p = 0;
@@ -157,6 +162,7 @@ exports.getHotelById = async (req, res) => {
         return { ...r, effectivePrice: ep };
       });
     }
+    o.version = version;
 
     res.json({
       success: true,
@@ -374,8 +380,9 @@ exports.updateHotelRoomPrices = async (req, res) => {
 
     await hotel.save();
 
-    const { broadcastHotelPriceUpdate } = require("../sse");
-    broadcastHotelPriceUpdate(hotel._id.toString());
+    const notifyHotelUpdate = require("../services/notifyHotelUpdate").notifyHotelUpdate;
+    const newVersion = await hotelVersion.incVersion(hotel._id.toString());
+    notifyHotelUpdate(hotel._id.toString(), newVersion);
 
     res.json({
       success: true,
@@ -461,8 +468,9 @@ exports.updateHotelDiscounts = async (req, res) => {
     hotel.discounts = normalized;
     await hotel.save();
 
-    const { broadcastHotelPriceUpdate } = require("../sse");
-    broadcastHotelPriceUpdate(hotel._id.toString());
+    const notifyHotelUpdate = require("../services/notifyHotelUpdate").notifyHotelUpdate;
+    const newVersion = await hotelVersion.incVersion(hotel._id.toString());
+    notifyHotelUpdate(hotel._id.toString(), newVersion);
 
     res.json({
       success: true,

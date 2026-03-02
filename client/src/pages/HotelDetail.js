@@ -91,7 +91,8 @@ const HotelDetail = () => {
         quantity: 1,
         checkInDate: searchParams.checkIn,
         checkOutDate: searchParams.checkOut,
-        nights: nights
+        nights: nights,
+        ...(hotel.version != null && { version: hotel.version }),
       });
 
       Toast.show({
@@ -110,6 +111,14 @@ const HotelDetail = () => {
         }
       });
     } catch (error) {
+      if (error.code === 409) {
+        Toast.show({
+          icon: 'fail',
+          content: '价格或房态已变更，请刷新后重试'
+        });
+        fetchHotelDetail();
+        return;
+      }
       console.error('添加购物车失败:', error);
       Toast.show({
         icon: 'fail',

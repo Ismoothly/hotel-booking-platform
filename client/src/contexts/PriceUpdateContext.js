@@ -10,6 +10,13 @@ const getSSEUrl = () => {
   return `${window.location.origin}/api/events`;
 };
 
+const getWSUrl = () => {
+  if (process.env.REACT_APP_WS_URL) return process.env.REACT_APP_WS_URL;
+  if (process.env.NODE_ENV === 'development') return 'ws://localhost:5000/ws';
+  const o = window.location.origin;
+  return (o.startsWith('https') ? 'wss:' : 'ws:') + o.slice(o.indexOf('://')) + '/ws';
+};
+
 export const usePriceUpdate = () => {
   const context = useContext(PriceUpdateContext);
   if (!context) {
@@ -58,9 +65,9 @@ export const PriceUpdateProvider = ({ children }) => {
         es.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            if (data.type === 'hotel_price_updated' && data.hotelId) {
+            if ((data.type === 'hotel_price_updated' || data.type === 'hotel_update') && data.hotelId) {
               if (process.env.NODE_ENV === 'development') {
-                console.log('[SSE] hotel_price_updated', data.hotelId);
+                console.log('[SSE] hotel update', data.hotelId);
               }
               setUpdatedHotelIds((prev) =>
                 prev.includes(data.hotelId) ? prev : [...prev, data.hotelId]
@@ -92,6 +99,40 @@ export const PriceUpdateProvider = ({ children }) => {
         eventSourceRef.current.close();
         eventSourceRef.current = null;
       }
+    };
+  }, []);
+
+  // WebSocket：与 SSE 并行，收到 hotel_update 时同样标记酒店需刷新
+  useEffect(() => {
+    if (typeof window === 'undefined' || !window.WebSocket) return;
+    const wsUrl = getWSUrl();
+    if (process.env.NODE_ENV === 'development') console.log('[WS] Connecting to', wsUrl);
+    let ws = null;
+    let reconnectTimer = null;
+    const connect = () => {
+      try {
+        ws = new WebSocket(wsUrl);
+        ws.onmessage = (ev) => {
+          try {
+            const data = JSON.parse(ev.data);
+            if (data.type === 'hotel_update' && data.hotelId) {
+              setUpdatedHotelIds((prev) =>
+                prev.includes(data.hotelId) ? prev : [...prev, data.hotelId]
+              );
+            }
+          } catch (e) {}
+        };
+        ws.onclose = () => {
+          ws = null;
+          reconnectTimer = setTimeout(connect, 5000);
+        };
+        ws.onerror = () => {};
+      } catch (e) {}
+    };
+    connect();
+    return () => {
+      if (reconnectTimer) clearTimeout(reconnectTimer);
+      if (ws) ws.close();
     };
   }, []);
 

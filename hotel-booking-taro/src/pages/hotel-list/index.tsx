@@ -6,9 +6,10 @@ import {
   Picker,
   Input,
 } from "@tarojs/components";
-import { useEffect, useMemo, useState } from "react";
-import Taro, { useLoad, useRouter } from "@tarojs/taro";
+import { useEffect, useMemo, useRef, useState } from "react";
+import Taro, { useLoad, useRouter, useDidShow, useDidHide } from "@tarojs/taro";
 import { hotelAPI } from "../../services/api";
+import { getAndClearUpdatedHotelIds, setHotelUpdateListener, removeHotelUpdateListener } from "../../services/hotelUpdateSocket";
 import DateRangePicker from "./components/DateRangePicker";
 import SkeletonLoader from "./components/SkeletonLoader";
 
@@ -66,6 +67,9 @@ export default function HotelList() {
   const [dateVisible, setDateVisible] = useState(false);
   const [selectedSort, setSelectedSort] = useState(-1);
   const [sortType, setSortType] = useState<"" | "price" | "star">("");
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const fetchHotelsRef = useRef<(filters?: any, silent?: boolean) => void>(() => {});
 
   useLoad(() => {
     const p = router.params || {};
@@ -105,6 +109,44 @@ export default function HotelList() {
     sortType,
   ]);
 
+  fetchHotelsRef.current = fetchHotels;
+
+  const onHotelUpdate = useRef((_hotelId: string) => {
+    fetchHotelsRef.current?.({}, true);
+  }).current;
+
+  useDidShow(() => {
+    setHotelUpdateListener(onHotelUpdate);
+    wsCheckRef.current = setInterval(() => {
+      const ids = getAndClearUpdatedHotelIds();
+      if (ids.length > 0) fetchHotelsRef.current?.({}, true);
+    }, 3000);
+    pollIntervalRef.current = setInterval(() => {
+      fetchHotelsRef.current?.({}, true);
+    }, 30000);
+  });
+
+  useDidHide(() => {
+    removeHotelUpdateListener(onHotelUpdate);
+    if (wsCheckRef.current) {
+      clearInterval(wsCheckRef.current);
+      wsCheckRef.current = null;
+    }
+    if (pollIntervalRef.current) {
+      clearInterval(pollIntervalRef.current);
+      pollIntervalRef.current = null;
+    }
+  });
+
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+      }
+    };
+  }, []);
+
   const formatDayLabel = (dateStr: string) => {
     if (!dateStr) return "";
     const d = new Date(dateStr);
@@ -120,8 +162,8 @@ export default function HotelList() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }, [checkInDate, checkOutDate]);
 
-  const fetchHotels = async (filters: any = {}) => {
-    setLoading(true);
+  const fetchHotels = async (filters: any = {}, silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const params: any = {
         city: selectedCity,
@@ -165,12 +207,14 @@ export default function HotelList() {
       }
       setHotels(sorted);
     } catch (error: any) {
-      Taro.showToast({
-        title: error.message || "获取酒店列表失败",
-        icon: "none",
-      });
+      if (!silent) {
+        Taro.showToast({
+          title: error.message || "获取酒店列表失败",
+          icon: "none",
+        });
+      }
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   };
 

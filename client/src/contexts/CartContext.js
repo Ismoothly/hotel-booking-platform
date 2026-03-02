@@ -62,33 +62,45 @@ export function CartProvider({ children }) {
         ];
       }
 
-      // 更新本地状态
-      setCartItems(updatedItems);
-      calculateTotal(updatedItems);
-
-      // 同时保存到后端
+      // 先请求后端，成功后再更新本地
       console.log('📤 [CART] 发送请求到后端: POST /api/cart');
       const response = await api.post('/cart', {
         hotelId: item.hotelId,
         roomType: item.roomType,
         checkInDate: item.checkInDate,
         checkOutDate: item.checkOutDate,
-        quantity: item.quantity || 1
+        quantity: item.quantity || 1,
+        ...(item.version != null && { version: item.version }),
       });
 
       if (response && response.code === 200) {
         console.log('✅ [CART] 商品已保存到后端');
+        setCartItems(updatedItems);
+        calculateTotal(updatedItems);
+      } else if (response && response.code === 409) {
+        setError(response.message || '价格或房态已变更，请刷新后重试');
+        const err = new Error(response.message || '价格或房态已变更，请刷新后重试');
+        err.code = 409;
+        err.latestVersion = response.latestVersion;
+        setLoading(false);
+        throw err;
       } else {
         console.warn('⚠️ [CART] 后端返回异常:', response);
-        setError('购物车保存失败，但本地已更新');
+        setError('购物车保存失败，请重试');
       }
 
       setLoading(false);
     } catch (err) {
+      if (err.response?.data?.code === 409 || err.code === 409) {
+        setError(err.response?.data?.message || err.message || '价格或房态已变更，请刷新后重试');
+        const e = new Error(err.response?.data?.message || err.message || '价格或房态已变更，请刷新后重试');
+        e.code = 409;
+        throw e;
+      }
       console.error('❌ [CART] 添加商品失败:', err.message);
       setError(err.message || '添加商品失败，请重试');
       setLoading(false);
-      throw err; // 重新抛出错误让调用者处理
+      throw err;
     }
   }, [cartItems, calculateTotal]);
 
@@ -227,6 +239,30 @@ export function CartProvider({ children }) {
     }
   }, [calculateTotal, clearCart]);
 
+  /**
+   * 从服务端拉取购物车（用于 409 后刷新）
+   */
+  const fetchCart = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await api.get('/cart');
+      if (res && res.data) {
+        if (res.data.items && res.data.items.length) {
+          setCartItems(res.data.items);
+          calculateTotal(res.data.items);
+        } else {
+          setCartItems([]);
+          setCartTotal(0);
+        }
+      }
+    } catch (err) {
+      setError(err.message || '获取购物车失败');
+    } finally {
+      setLoading(false);
+    }
+  }, [calculateTotal]);
+
   const value = {
     cartItems,
     cartTotal,
@@ -238,6 +274,7 @@ export function CartProvider({ children }) {
     updateQuantity,
     clearCart,
     syncCartFromAPI,
+    fetchCart,
     setError
   };
 

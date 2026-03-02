@@ -1,10 +1,13 @@
 const express = require("express");
+const http = require("http");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const cookieParser = require("cookie-parser");
 const config = require("./config");
 const { connectDB } = require("./config/database");
+const { connectRedis } = require("./config/redis");
 const { apiLimiter } = require("./middleware/rateLimiter");
+const wsServer = require("./websocket");
 
 // 导入路由
 const authRoutes = require("./routes/auth");
@@ -77,17 +80,24 @@ app.use((err, req, res, next) => {
 
 // 启动服务器
 const PORT = config.port;
+const appServer = http.createServer(app);
 
 async function startServer() {
   try {
-    // 连接到 MongoDB
     await connectDB();
+    try {
+      await connectRedis();
+    } catch (e) {
+      console.warn('[Redis] 未连接，版本校验与推送仍可用（版本默认为 1）:', e.message);
+    }
+    wsServer.attach(appServer);
 
-    app.listen(PORT, "0.0.0.0", () => {
+    appServer.listen(PORT, "0.0.0.0", () => {
       console.log("=================================");
       console.log(`Server is running on port ${PORT}`);
       console.log(`Environment: ${config.env}`);
       console.log(`API URL: http://0.0.0.0:${PORT}`);
+      console.log(`WebSocket: ws://0.0.0.0:${PORT}/ws`);
       console.log("=================================");
     });
   } catch (err) {
@@ -101,6 +111,8 @@ process.on("SIGINT", async () => {
   console.log("\n正在关闭服务器...");
   try {
     await require("./config/database").disconnectDB();
+    const { disconnectRedis } = require("./config/redis");
+    await disconnectRedis();
     process.exit(0);
   } catch (err) {
     console.error("关闭时出错:", err);

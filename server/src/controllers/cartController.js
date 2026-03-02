@@ -1,5 +1,6 @@
 const Cart = require('../models/Cart-mongoose');
 const Hotel = require('../models/Hotel-mongoose');
+const hotelVersion = require('../services/hotelVersion');
 
 /**
  * 获取购物车
@@ -34,7 +35,7 @@ exports.getCart = async (req, res) => {
 exports.addToCart = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { hotelId, roomType, checkInDate, checkOutDate, quantity = 1 } = req.body;
+    const { hotelId, roomType, checkInDate, checkOutDate, quantity = 1, version: clientVersion } = req.body;
 
     console.log('🛒 [CART] 接收到添加购物车请求:', {
       userId,
@@ -78,6 +79,16 @@ exports.addToCart = async (req, res) => {
 
     console.log('✓ [CART] 找到房型:', roomType);
 
+    const currentVersion = await hotelVersion.getVersion(hotelId.toString());
+    if (clientVersion != null && Number(clientVersion) !== Number(currentVersion)) {
+      return res.status(409).json({
+        code: 409,
+        message: '价格或房态已变更，请刷新后重试',
+        latestVersion: currentVersion,
+        hotel: null,
+      });
+    }
+
     // 计算夜数
     const checkIn = new Date(checkInDate);
     const checkOut = new Date(checkOutDate);
@@ -119,7 +130,8 @@ exports.addToCart = async (req, res) => {
       quantity,
       checkInDate,
       checkOutDate,
-      nights
+      nights,
+      version: currentVersion,
     });
 
     console.log('✅ [CART] 成功添加到购物车，共', cart.items.length, '项');

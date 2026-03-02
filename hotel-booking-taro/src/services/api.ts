@@ -16,6 +16,13 @@ const getAPIBaseURL = () => {
   return 'http://localhost:5000/api'
 }
 
+/** WebSocket 地址（用于酒店价格/房态推送） */
+export const getWsUrl = () => {
+  const base = getAPIBaseURL()
+  const host = base.replace(/\/api\/?$/, '')
+  return (host.startsWith('https') ? 'wss:' : 'ws:') + host.slice(host.indexOf('://')) + '/ws'
+}
+
 // 导出函数以便动态修改API地址
 export const setAPIBaseURL = (url: string) => {
   Taro.setStorageSync('API_BASE_URL', url)
@@ -60,7 +67,11 @@ const request = async (config: RequestConfig) => {
 
     if (response.statusCode >= 400) {
       const msg = response.data && (response.data as any).message ? (response.data as any).message : '请求失败'
-      return Promise.reject(new Error(msg))
+      const err: any = new Error(msg)
+      err.code = (response.data as any)?.code
+      err.statusCode = response.statusCode
+      err.response = response
+      return Promise.reject(err)
     }
 
     return response.data
@@ -180,6 +191,7 @@ export const cartAPI = {
     checkInDate: string
     checkOutDate: string
     quantity?: number
+    version?: number
   }) =>
     request({
       url: '/cart',

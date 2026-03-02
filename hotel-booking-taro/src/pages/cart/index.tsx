@@ -1,7 +1,8 @@
 import { View, Text, ScrollView } from '@tarojs/components'
-import { useState, useEffect } from 'react'
-import Taro, { useDidShow } from '@tarojs/taro'
+import { useState, useEffect, useRef } from 'react'
+import Taro, { useDidShow, useDidHide } from '@tarojs/taro'
 import { cartAPI } from '../../services/api'
+import { getAndClearUpdatedHotelIds, setHotelUpdateListener, removeHotelUpdateListener } from '../../services/hotelUpdateSocket'
 import './index.scss'
 
 interface CartItem {
@@ -27,10 +28,8 @@ interface Cart {
 export default function Cart() {
   const [cart, setCart] = useState<Cart | null>(null)
   const [loading, setLoading] = useState(true)
-
-  useDidShow(() => {
-    fetchCart()
-  })
+  const wsCheckRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const fetchCartRef = useRef<() => Promise<void>>(async () => {})
 
   const fetchCart = async () => {
     try {
@@ -48,6 +47,33 @@ export default function Cart() {
       setLoading(false)
     }
   }
+  fetchCartRef.current = fetchCart
+
+  const onHotelUpdateRef = useRef<((hotelId: string) => void) | null>(null)
+
+  useDidShow(() => {
+    const onHotelUpdate = () => {
+      fetchCartRef.current()
+    }
+    onHotelUpdateRef.current = onHotelUpdate
+    setHotelUpdateListener(onHotelUpdate)
+    fetchCart()
+    wsCheckRef.current = setInterval(() => {
+      const ids = getAndClearUpdatedHotelIds()
+      if (ids.length > 0) fetchCartRef.current()
+    }, 3000)
+  })
+
+  useDidHide(() => {
+    if (onHotelUpdateRef.current) {
+      removeHotelUpdateListener(onHotelUpdateRef.current)
+      onHotelUpdateRef.current = null
+    }
+    if (wsCheckRef.current) {
+      clearInterval(wsCheckRef.current)
+      wsCheckRef.current = null
+    }
+  })
 
   const updateQuantity = async (index: number, newQuantity: number) => {
     if (newQuantity <= 0) {

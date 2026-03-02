@@ -84,10 +84,16 @@ export default function Checkout() {
         })
       }
     } catch (error: any) {
+      const is409 = error.code === 409 || error.statusCode === 409
       Taro.showToast({
-        title: error.message || '创建订单失败',
+        title: is409 ? '价格或房态已变更，请刷新后重试' : (error.message || '创建订单失败'),
         icon: 'none'
       })
+      if (is409) {
+        setTimeout(() => {
+          Taro.switchTab({ url: '/pages/cart/index' })
+        }, 1500)
+      }
     } finally {
       setLoading(false)
     }

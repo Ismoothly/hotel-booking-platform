@@ -16,7 +16,7 @@ import api from '../services/api';
 import './Cart.css';
 
 export default function Cart() {
-  const { cartItems, cartTotal, removeFromCart, updateQuantity, clearCart } = useCart();
+  const { cartItems, cartTotal, removeFromCart, updateQuantity, clearCart, fetchCart } = useCart();
   const [formVisible, setFormVisible] = useState(false);
   const [loading, setLoading] = useState(false);
   const [form] = Form.useForm();
@@ -131,11 +131,14 @@ export default function Cart() {
         response: error.response?.data,
         status: error.response?.status
       });
-      
+      const is409 = error.response?.status === 409 || error.response?.data?.code === 409 || error.code === 409;
       Modal.alert({
-        title: '订单创建失败',
-        content: error.response?.data?.message || error.message || '未知错误',
-        okText: '确定'
+        title: is409 ? '数据已变更' : '订单创建失败',
+        content: is409 ? '价格或房态已变更，请刷新后重试' : (error.response?.data?.message || error.message || '未知错误'),
+        okText: '确定',
+        onOk: () => {
+          if (is409 && fetchCart) fetchCart();
+        }
       });
     } finally {
       setLoading(false);
