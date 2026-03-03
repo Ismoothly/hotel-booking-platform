@@ -56,6 +56,8 @@ export default function HotelList() {
   const router = useRouter();
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
   const [selectedCity, setSelectedCity] = useState("上海");
   const [selectedStar, setSelectedStar] = useState(0);
   const [selectedPrice, setSelectedPrice] = useState(0);
@@ -69,7 +71,13 @@ export default function HotelList() {
   const [sortType, setSortType] = useState<"" | "price" | "star">("");
   const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const wsCheckRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const fetchHotelsRef = useRef<(filters?: any, silent?: boolean) => void>(() => {});
+  const fetchHotelsRef = useRef<
+    (pageNum?: number, opts?: { silent?: boolean; append?: boolean }) => void
+  >(() => {});
+  const pageRef = useRef(1);
+  const hasMoreRef = useRef(true);
+  const inflightRef = useRef(false);
+  const PAGE_SIZE = 10;
 
   useLoad(() => {
     const p = router.params || {};
@@ -96,8 +104,150 @@ export default function HotelList() {
     setSelectedPrice(Number.isFinite(priceIdx) ? priceIdx : 0);
   });
 
+  const formatDayLabel = (dateStr: string) => {
+    if (!dateStr) return "";
+    const d = new Date(dateStr);
+    const day = d.getDate();
+    return `${day}日`;
+  };
+
+  const calculateNights = useMemo(() => {
+    if (!checkInDate || !checkOutDate) return 0;
+    const checkIn = new Date(checkInDate);
+    const checkOut = new Date(checkOutDate);
+    const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  }, [checkInDate, checkOutDate]);
+
+  const buildQueryParams = (filters: any = {}, pageNum = 1) => {
+    const params: any = {
+      city: selectedCity,
+      ...filters,
+      page: pageNum,
+      limit: PAGE_SIZE,
+    };
+    if (keyword) {
+      params.keyword = keyword;
+    }
+    if (facilities && facilities.length > 0) {
+      params.facilities = facilities.join(",");
+    }
+    if (checkInDate) {
+      params.checkInDate = checkInDate;
+    }
+    if (checkOutDate) {
+      params.checkOutDate = checkOutDate;
+    }
+    if (selectedStar > 0) {
+      params.starRating = selectedStar + 2;
+    }
+    if (selectedPrice > 0) {
+      params.priceRange = PRICE_VALUES[selectedPrice];
+    }
+    return params;
+  };
+
+  const sortHotels = (list: Hotel[]) => {
+    const minPrice = (
+      rs?: Array<{ price: number; effectivePrice?: number }>,
+    ) => {
+      if (!rs || rs.length === 0) return Number.POSITIVE_INFINITY;
+      return Math.min(
+        ...rs.map((r) => (r.effectivePrice != null ? r.effectivePrice : r.price)),
+      );
+    };
+    const sorted = list.slice();
+    if (sortType === "price") {
+      sorted.sort((a, b) => minPrice(a.rooms) - minPrice(b.rooms));
+    } else if (sortType === "star") {
+      sorted.sort((a, b) => (b.starRating || 0) - (a.starRating || 0));
+    }
+    return sorted;
+  };
+
+  const fetchHotels = async (
+    pageNum = 1,
+    opts: { silent?: boolean; append?: boolean } = {},
+  ) => {
+    const silent = !!opts.silent;
+    const append = !!opts.append;
+    if (inflightRef.current) return;
+    inflightRef.current = true;
+
+    if (!silent && !append) setLoading(true);
+    if (append) setLoadingMore(true);
+    try {
+      const params = buildQueryParams({}, pageNum);
+      const response = await hotelAPI.getHotels(params);
+      const list = (response.data || []) as Hotel[];
+      const total = typeof response.total === "number" ? response.total : null;
+
+      const nextPage = pageNum;
+      const nextHotels = append ? hotels.concat(list) : list;
+      const sorted = sortHotels(nextHotels);
+
+      setHotels(sorted);
+      pageRef.current = nextPage;
+
+      let nextHasMore = true;
+      if (total != null) {
+        nextHasMore = nextPage * PAGE_SIZE < total;
+      } else {
+        nextHasMore = list.length >= PAGE_SIZE;
+      }
+      setHasMore(nextHasMore);
+      hasMoreRef.current = nextHasMore;
+    } catch (error: any) {
+      if (!silent) {
+        Taro.showToast({
+          title: error.message || "获取酒店列表失败",
+          icon: "none",
+        });
+      }
+    } finally {
+      if (!silent && !append) setLoading(false);
+      if (append) setLoadingMore(false);
+      inflightRef.current = false;
+    }
+  };
+
+  const refreshLoadedPages = async (silent = true) => {
+    // 逐页刷新 1..page，避免滚动到中间时刷新只覆盖第一页
+    if (inflightRef.current) return;
+    const pagesToLoad = Math.max(1, pageRef.current || 1);
+    if (!silent) setLoading(true);
+    inflightRef.current = true;
+    try {
+      const all: Hotel[] = [];
+      for (let p = 1; p <= pagesToLoad; p++) {
+        const params = buildQueryParams({}, p);
+        // eslint-disable-next-line no-await-in-loop
+        const response = await hotelAPI.getHotels(params);
+        const list = (response.data || []) as Hotel[];
+        all.push(...list);
+      }
+      setHotels(sortHotels(all));
+    } catch (e) {
+      // ignore
+    } finally {
+      if (!silent) setLoading(false);
+      inflightRef.current = false;
+    }
+  };
+
+  const handleLoadMore = () => {
+    if (loading || loadingMore) return;
+    if (!hasMoreRef.current) return;
+    const next = (pageRef.current || 1) + 1;
+    fetchHotels(next, { silent: true, append: true });
+  };
+
+  // 将函数引用暴露给定时器/回调，避免闭包拿到旧函数
+  fetchHotelsRef.current = fetchHotels;
+
+  // 筛选条件变化：重置到第一页
   useEffect(() => {
-    fetchHotels({});
+    fetchHotels(1, { silent: false, append: false });
   }, [
     selectedCity,
     selectedStar,
@@ -109,20 +259,19 @@ export default function HotelList() {
     sortType,
   ]);
 
-  fetchHotelsRef.current = fetchHotels;
-
   const onHotelUpdate = useRef((_hotelId: string) => {
-    fetchHotelsRef.current?.({}, true);
+    // 有酒店变更：刷新已加载的页（1..page）
+    refreshLoadedPages(true);
   }).current;
 
   useDidShow(() => {
     setHotelUpdateListener(onHotelUpdate);
     wsCheckRef.current = setInterval(() => {
       const ids = getAndClearUpdatedHotelIds();
-      if (ids.length > 0) fetchHotelsRef.current?.({}, true);
+      if (ids.length > 0) refreshLoadedPages(true);
     }, 3000);
     pollIntervalRef.current = setInterval(() => {
-      fetchHotelsRef.current?.({}, true);
+      refreshLoadedPages(true);
     }, 30000);
   });
 
@@ -140,83 +289,16 @@ export default function HotelList() {
 
   useEffect(() => {
     return () => {
+      if (wsCheckRef.current) {
+        clearInterval(wsCheckRef.current);
+        wsCheckRef.current = null;
+      }
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
         pollIntervalRef.current = null;
       }
     };
   }, []);
-
-  const formatDayLabel = (dateStr: string) => {
-    if (!dateStr) return "";
-    const d = new Date(dateStr);
-    const day = d.getDate();
-    return `${day}日`;
-  };
-
-  const calculateNights = useMemo(() => {
-    if (!checkInDate || !checkOutDate) return 0;
-    const checkIn = new Date(checkInDate);
-    const checkOut = new Date(checkOutDate);
-    const diffTime = Math.abs(checkOut.getTime() - checkIn.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  }, [checkInDate, checkOutDate]);
-
-  const fetchHotels = async (filters: any = {}, silent = false) => {
-    if (!silent) setLoading(true);
-    try {
-      const params: any = {
-        city: selectedCity,
-        ...filters,
-      };
-      if (keyword) {
-        params.keyword = keyword;
-      }
-      if (facilities && facilities.length > 0) {
-        params.facilities = facilities.join(",");
-      }
-      if (checkInDate) {
-        params.checkInDate = checkInDate;
-      }
-      if (checkOutDate) {
-        params.checkOutDate = checkOutDate;
-      }
-      if (selectedStar > 0) {
-        params.starRating = selectedStar + 2;
-      }
-      if (selectedPrice > 0) {
-        params.priceRange = PRICE_VALUES[selectedPrice];
-      }
-      const response = await hotelAPI.getHotels(params);
-      const list = (response.data || []) as Hotel[];
-      const minPrice = (
-        rs?: Array<{ price: number; effectivePrice?: number }>,
-      ) => {
-        if (!rs || rs.length === 0) return Number.POSITIVE_INFINITY;
-        return Math.min(
-          ...rs.map((r) =>
-            r.effectivePrice != null ? r.effectivePrice : r.price,
-          ),
-        );
-      };
-      let sorted = list.slice();
-      if (sortType === "price") {
-        sorted.sort((a, b) => minPrice(a.rooms) - minPrice(b.rooms));
-      } else if (sortType === "star") {
-        sorted.sort((a, b) => (b.starRating || 0) - (a.starRating || 0));
-      }
-      setHotels(sorted);
-    } catch (error: any) {
-      if (!silent) {
-        Taro.showToast({
-          title: error.message || "获取酒店列表失败",
-          icon: "none",
-        });
-      }
-    } finally {
-      if (!silent) setLoading(false);
-    }
-  };
 
   const handleCityChange = (e: any) => {
     const cityIndex = e.detail.value;
@@ -320,7 +402,7 @@ export default function HotelList() {
                 placeholder="搜索酒店"
                 onInput={(e) => setKeyword(e.detail.value)}
                 confirmType="search"
-                onConfirm={() => fetchHotels({})}
+                onConfirm={() => fetchHotels(1, { silent: false, append: false })}
               />
             </View>
           </View>
@@ -335,7 +417,6 @@ export default function HotelList() {
               onClick={() => {
                 const updated = facilities.filter((_t, i) => i !== idx);
                 setFacilities(updated);
-                fetchHotels({ facilities: updated.join(",") });
               }}
             >
               <Text className="text-sm">{tag}</Text>
@@ -485,7 +566,7 @@ export default function HotelList() {
 
         <View
           className="flex items-center justify-center bg-primary text-white border border-solid border-primary rounded-xl h-8 leading-8 px-4 text-28px font-bold shadow-primary"
-          onClick={() => fetchHotels({})}
+          onClick={() => fetchHotels(1, { silent: false, append: false })}
         >
           <Text>筛选</Text>
         </View>
@@ -496,7 +577,12 @@ export default function HotelList() {
           <SkeletonLoader />
         </ScrollView>
       ) : (
-        <ScrollView scrollY className="px-3 box-border">
+        <ScrollView
+          scrollY
+          className="px-3 box-border"
+          lowerThreshold={120}
+          onScrollToLower={handleLoadMore}
+        >
           {hotels.map((hotel) => (
             <View
               key={hotel._id}
@@ -585,6 +671,17 @@ export default function HotelList() {
               <Text>暂无符合条件的酒店</Text>
             </View>
           )}
+          {hotels.length > 0 && (
+            <View className="py-4 text-center text-text3 text-sm">
+              <Text>
+                {loadingMore
+                  ? "加载中..."
+                  : hasMore
+                    ? "上拉加载更多"
+                    : "没有更多了"}
+              </Text>
+            </View>
+          )}
         </ScrollView>
       )}
       <DateRangePicker
@@ -600,7 +697,7 @@ export default function HotelList() {
           setCheckInDate(inD);
           setCheckOutDate(outD);
           setDateVisible(false);
-          fetchHotels({});
+          fetchHotels(1, { silent: false, append: false });
         }}
       />
     </View>

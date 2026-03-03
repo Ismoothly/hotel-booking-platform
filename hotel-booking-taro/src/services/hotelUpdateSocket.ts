@@ -22,7 +22,13 @@ export function removeHotelUpdateListener(fn: HotelUpdateListener) {
 }
 
 function connect() {
-  const url = getWsUrl()
+  let url: string
+  try {
+    url = getWsUrl()
+  } catch (e) {
+    console.warn('[WS] getWsUrl failed:', e)
+    return
+  }
   console.log('[WS] connecting:', url)
   const promise = Taro.connectSocket({
     url,

@@ -1,4 +1,4 @@
-export default defineAppConfig({
+export default {
   pages: [
     'pages/index/index',
     'pages/hotel-list/index',
@@ -48,5 +48,5 @@ export default defineAppConfig({
       desc: '您的位置信息将用于获取附近酒店推荐'
     }
   }
-})
+}
 

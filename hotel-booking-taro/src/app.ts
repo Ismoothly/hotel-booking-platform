@@ -6,11 +6,14 @@ import './app.scss'
 
 function App({ children }: PropsWithChildren<any>) {
   useLaunch(() => {
-    console.log('[App] launched, init WS')
-    connectHotelUpdateSocket()
+    try {
+      console.log('[App] launched, init WS')
+      connectHotelUpdateSocket()
+    } catch (e) {
+      console.warn('[App] WS init failed, app still runs:', e)
+    }
   })
 
-  // children 是将要会渲染的页面
   return children
 }
   
