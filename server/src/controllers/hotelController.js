@@ -562,7 +562,11 @@ exports.getMerchantHotels = async (req, res) => {
       const cityStr = String(city)
         .trim()
         .replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      query.city = new RegExp(`^${cityStr}`);
+      const cityWithoutSuffix = cityStr.replace(/市$/, "");
+      query.$or = [
+        { city: new RegExp(`^${cityStr}`) },
+        { city: new RegExp(`^${cityWithoutSuffix}`) },
+      ];
     }
     if (reviewStatus) query.reviewStatus = reviewStatus;
     if (status) query.status = status;

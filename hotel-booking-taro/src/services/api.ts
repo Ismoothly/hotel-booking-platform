@@ -18,9 +18,18 @@ const getAPIBaseURL = () => {
 
 /** WebSocket 地址（用于酒店价格/房态推送） */
 export const getWsUrl = () => {
+  const customWS = Taro.getStorageSync('WS_BASE_URL')
+  if (customWS && typeof customWS === 'string' && customWS.startsWith('ws')) {
+    return customWS
+  }
   const base = getAPIBaseURL()
   const host = base.replace(/\/api\/?$/, '')
-  return (host.startsWith('https') ? 'wss:' : 'ws:') + host.slice(host.indexOf('://')) + '/ws'
+  let wsHost = host.slice(host.indexOf('://') + 2)
+  if (wsHost.startsWith('localhost')) {
+    wsHost = '127.0.0.1' + wsHost.slice(9)
+  }
+  const protocol = host.startsWith('https') ? 'wss' : 'ws'
+  return `${protocol}://${wsHost}/ws`
 }
 
 // 导出函数以便动态修改API地址
